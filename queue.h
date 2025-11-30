@@ -25,12 +25,9 @@ durante la ejecución del programa.
 typedef unsigned char boolean;
 
 //Definir un elemento (Se modela con una estructura "elemento")
-typedef struct elemento
-{
-	char c;
-	int n;
-	float f;
-} elemento;
+//Se usa un apuntador generico (void *) para que la estructura TAD Cola funcione
+//con cualquier caso, pero es necesario hacer casting.
+typedef void* elemento;
 
 //Definir la estructura de un nodo dinámico
 typedef struct nodo
@@ -58,7 +55,5 @@ elemento Element(cola *c, int i); 	// Recibe una cola y un número de elemento d
 int Size(cola *c);					//Tamaño (Size): Retorna el tamaño de la cola 	
 elemento Element(cola * c, int i);	//Recibe una cola y un número de elemento de 1 al tamaño de la cola y retorna el elemento de esa posición
 void Destroy(cola * c);				//Eliminar cola (Destroy): Recibe una cola y la libera completamente.
-int Search(cola *c, elemento e); 	//Buscar posicion (Search): Recibe una cola y un elemento, devuelve la posicion del
-									//elemento en la cola, o un 0 en caso contrario.
 void Flip(cola *c);					//Voltear cola (Flip): Recibe una cola voltea sus elementos, donde el frente sera el
 									//final, y el final el frente.

@@ -215,43 +215,6 @@ void Destroy(cola * c)
 }
 
 /*
-int Search(cola *c, elemento e);
-Descripción: Recibe una cola y un elemento, busca el elemento
-			 en la cola, y retorna su posicion en la cola.
-Recibe: cola *c (Referencia a la cola "c" donde buscar)
-		elemento e (Elemento a buscar en la cola "c")
-Devuelve: Posicion del elemento "e" en la cola "c"
-Observaciones: En caso de que el elemento "e" no exista
-			   en la cola "c", se retorna el valor 0.
-*/
-int Search(cola * c, elemento e){
-	int pos = 0;
-	elemento aux_e;
-	nodo *aux_n;
-	int i, n;
-	
-	if(Empty(c)){
-		printf("Error: Search(c,e) la pila esta vacia");
-		exit(1);
-	}
-		
-	n = Size(c);
-	
-	aux_n = c -> frente;
-	
-	for(i = 1; i <= n; i++){
-		aux_e = aux_n -> e;
-		if(aux_e.c == e.c && aux_e.n == e.n && aux_e.f == e.f){
-			pos = i;
-			break;
-		}
-		aux_n = aux_n->siguiente;
-	}
-	
-	return pos;
-}
-
-/*
 void Flip(cola *c);
 Descripción: Recibe una cola y voltea el orden de los elementos
 			 en la cola.
