@@ -53,3 +53,7 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Archivos y carpetas de configuracion y sistema
+# Ignora la carpeta de configuracion de VS Code
+.vscode/  
