@@ -18,14 +18,18 @@ OBSERVACIONES:
 //LLAMADA DE LIBRERIAS
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <semaphore.h>
+#include "queue.h"
 
 //DECLARACIÓN DE CONSTANTES
 #define SHM_PATH "/tmp"
+#define SHM_KEY 'A'
 #define SEM_SHM_PATH "/tmp/sem_shm"
 #define SEM_PROCESS_PATH "/tmp/sem_process"
 #define INITIAL_SEM_VALUE 1
@@ -43,22 +47,26 @@ typedef struct SHM_Planificador{
     int pid_proceso;
 }SHM_Planificador;
 
+//DECLARACIÓN DE VARIABLES GLOBALES
+SHM_Planificador *shm_planificador;
+sem_t *semaforo_shm;
+
 //DEFINICIÓN DE FUNCIONES PARA PLANIFICADOR
-int inicializar_memoria_compartida();   //Inicializar memoria compartida: Crear espacios de memoria 
-                                        //que seran usados por el planificador y procesos
-int inicializar_semaforos();            //Inicializar semaforos: Inicializar semaforos dentro de la memoria
-                                        //compartida para evitar condiciones de carrera y administrar procesos
-void encolar_proceso(pid_t pid);        //Encolar proceso(): Encola la estructura de un proceso 
-Proceso desencolar_proceso();           //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar
-                                        //despues lo retorna a la cola tran ejecutar el quantum.
-void ejecutar_proceso(pid_t pid);       //Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar
-                                        //enviando una señal para indicar ejecución al proceso.
-void detener_proceso(pid_t pid);        //Detener proceso(): Envia una señal a un proceso para indicar que termino
-                                        //su tiempo de ejecución, iniciando el proceso de seleccionar el siguiente proceso
-int iniciar_planificador();             //Iniciar planificador(): Empieza la ejecución del planificador hasta que le sea
-                                        //indicado que termine su función
-void limpiar();                         //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el
-                                        //planificador.
+void inicializar_memoria_compartida();      //Inicializar memoria compartida: Crear espacios de memoria 
+                                            //que seran usados por el planificador y procesos
+void inicializar_semaforos();               //Inicializar semaforos: Inicializar semaforos dentro de la memoria
+                                            //compartida para evitar condiciones de carrera y administrar procesos
+void encolar_proceso(pid_t pid, cola *cola_procesos);        //Encolar proceso(): Encola la estructura de un proceso 
+Proceso desencolar_proceso();               //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar
+                                            //despues lo retorna a la cola tran ejecutar el quantum.
+void ejecutar_proceso(pid_t pid);           //Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar
+                                            //enviando una señal para indicar ejecución al proceso.
+void detener_proceso(pid_t pid);            //Detener proceso(): Envia una señal a un proceso para indicar que termino
+                                            //su tiempo de ejecución, iniciando el proceso de seleccionar el siguiente proceso
+int iniciar_planificador();                 //Iniciar planificador(): Empieza la ejecución del planificador hasta que le sea
+                                            //indicado que termine su función
+void limpiar();                             //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el
+                                            //planificador.
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 int unirse_memoria_compartida();        //Unirse a SHM(): Función para que un proceso se una a la memoria compartida para
