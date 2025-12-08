@@ -138,19 +138,3 @@ void limpiar_planificador(cola *cola_procesos){
     }
 }
 
-//DEFINICIÓN DE FUNCIONES PARA PROCESO
-int unirse_memoria_compartida(){
-
-}
-
-int registrar_proceso(){
-
-}
-
-int realizar_proceso(){
-
-}
-
-int detener_ejecucion(){
-
-}

@@ -87,16 +87,16 @@ void limpiar_planificador(cola *cola_procesos);
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 //Unirse a SHM(): Función para que un proceso se una a la memoria compartida para
 //comunicarse con el planificador.
-int unirse_memoria_compartida();        
+void * unirse_memoria_compartida();        
 
 //Registrar proceso(): Función para enviar el PID del proceso al planificador y sea
 //considerando para la planificación con la Queue.
-int registrar_proceso();                
+void registrar_proceso();                
 
 //Realizar proceso(): Función que modifica al semaforo y permite al proceso empezar
 //su ejecución.
-int realizar_proceso();                 
+void realizar_proceso();                 
 
 //Detener ejecución(): Función que modifica los semaforos y detiene la ejecución de un
 //proceso al recibir la señal para detenerse.
-int detener_ejecucion();                
+void detener_ejecucion();                
