@@ -1,4 +1,23 @@
+/*
+LIBRERIA: IMPLEMENTACIÓN DE LIBRERIA PARA PLANIFICADOR ROUND ROBIN
+AUTOR:  Rodriguez Guarneros Hector Daniel 
+        Mendez Rosales Miguel Angel
+        (C) Noviembre 2024  
+VERSIÓN: 1.0 Noviembre 2024
+
+DESCRIPCIÓN: Planificador Round Robin.
+Algoritmo de planificación que hace uso de una cola
+de manera que todos los procesos que quieren se ejecutados
+entran a la cola, y el algoritmo realiza un quantum para
+ejecutar en el procesador una cantidad especifica de tiempo
+y despues devolver a la cola.
+
+OBSERVACIONES:  
+ 
+*/
 #include "planificador.h"
+
+int shm_planificador_id;
 
 /*
 void inicializar_memoria_compartida();
@@ -24,6 +43,7 @@ void inicializar_memoria_compartida(){
         perror("ERROR: shmget() en inicializar_memoria_compartida()");
         return NULL;
     }
+    shm_planificador_id = shm_id;
 
     shm_ptr = shmat(shm_id, NULL, 0);
     if(shm_id == (void *) -1){
@@ -52,27 +72,70 @@ void inicializar_semaforos(){
 }
 
 void encolar_proceso(pid_t pid, cola *cola_procesos){
-   
+    Proceso *proceso = (Proceso *) calloc(1, sizeof(Proceso));
+
+    if(proceso == NULL){
+        perror("ERROR: calloc() en encolar_proceso()");
+        return NULL;
+    }
+
+    proceso->pid = (int) pid;
+
+    Queue(cola_procesos, (elemento)proceso);
 }
 
-Proceso desencolar_proceso(){
+Proceso *desencolar_proceso(cola *cola_procesos){
+    elemento e;
+    Proceso *p;
+
+    if(Empty(cola_procesos)){
+        printf("ERROR: La cola esta vacia. No hay procesos por sacar\n");
+        return;
+    }
     
+    e = Dequeue(cola_procesos);
+
+    p = (Proceso *) e;
+
+    return p;
 }
 
 void ejecutar_proceso(pid_t pid){
-
+    kill(pid, SIGCONT);
 }
 
 void detener_proceso(pid_t pid){
-    
+    kill(pid, SIGSTOP);
 }
 
-int iniciar_planificador(){
-
+void iniciar_planificador(){
+    inicializar_memoria_compartida();
+    inicializar_semaforos();
 }
 
-void limpiar(){
+void limpiar_planificador(cola *cola_procesos){
+    Proceso *proceso;
+    pid_t pid_proceso;
+    while(!Empty(cola_procesos)){
+        proceso = desencolar_proceso(cola_procesos);
+        pid_proceso = proceso->pid;
+        kill(pid_proceso, SIGTERM);
+    }
 
+    if(sem_unlink(SEM_SHM_PATH) == -1){
+        perror("ERROR: sem_unlink() en limpiar_planificador()");
+        return NULL;
+    }
+
+    if(shmdt(shm_planificador) == -1){
+        perror("ERROR: shmdt en limpiar_planificador()");
+        return NULL;
+    }
+
+    if(shmctl(shm_planificador_id, IPC_RMID, NULL) == -1){
+        perror("ERROR: shmctl() en limpiar_planificador()");
+        return NULL;
+    }
 }
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
