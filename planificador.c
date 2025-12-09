@@ -27,23 +27,26 @@ Devuelve:
 Observaciones:  La función hace uso de las constantes definidos en la cabecera del planificador
                 en "planificador.h"
 */
-void inicializar_memoria_compartida(){
+void *inicializar_memoria_compartida(const char *path, int id, size_t size){
     key_t clave;
     int shm_id;
     void *shm_ptr;
 
-    clave = ftok(SHM_PATH, SHM_KEY);
+    key_t clave;
+    int shm_id;
+    void *shm_ptr = NULL;
+
+    clave = ftok(path, id);
     if(clave == (key_t) -1){
-        perror("ERROR: ftok() en inicializar_memoria_compartida()");
+        perror("ERROR: ftok() en unirse_memoria_compartida()");
         return NULL;
     }
 
-    shm_id = shmget(clave, sizeof(SHM_Planificador), IPC_CREAT|0666);
+    shm_id = shmget(clave, size, IPC_CREAT|0666);
     if(shm_id == -1){
         perror("ERROR: shmget() en inicializar_memoria_compartida()");
         return NULL;
     }
-    shm_planificador_id = shm_id;
 
     shm_ptr = shmat(shm_id, NULL, 0);
     if(shm_id == (void *) -1){
@@ -51,7 +54,7 @@ void inicializar_memoria_compartida(){
         return NULL;
     }
 
-    shm_planificador = (SHM_Planificador*) shm_ptr;
+    return shm_ptr;
 }
 
 /*
@@ -62,8 +65,8 @@ Devuelve:
 Observaciones:  El semoforo esta declarado en la cabecera, entonces es de acceso global para planificador
                 y procesos.
 */
-void inicializar_semaforos(){
-    semaforo_shm = sem_open(SEM_SHM_PATH, O_CREAT, 0644, INITIAL_SEM_VALUE);
+sem_t *inicializar_semaforos(const char *path, int init){
+    semaforo_shm = sem_open(path, O_CREAT, 0644, init);
 
     if(semaforo_shm == SEM_FAILED){
         perror("ERROR: sem_open() en inicializar_semaforos()");
@@ -108,9 +111,13 @@ void detener_proceso(pid_t pid){
     kill(pid, SIGSTOP);
 }
 
-void iniciar_planificador(){
-    inicializar_memoria_compartida();
-    inicializar_semaforos();
+void iniciar_planificador(pid_t pid_planificador){
+    shm_planificador = (SHM_Planificador*) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
+    semaforo_shm = inicializar_semaforos(SEM_SHM_PATH, INITIAL_SEM_VALUE);
+    semaforo_procesos = inicializar_semaforos(SEM_PROCESS_PATH, INITIAL_SEM_VALUE);
+
+    shm_planificador->procesos_registrados = 0;
+    shm_planificador->planificador_pid = (int) pid_planificador;
 }
 
 void limpiar_planificador(cola *cola_procesos){

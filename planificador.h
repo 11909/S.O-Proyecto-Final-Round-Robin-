@@ -32,6 +32,7 @@ OBSERVACIONES:
 #define SHM_PATH "/tmp"
 #define SHM_KEY 'A'
 #define SEM_SHM_PATH "/tmp/sem_shm"
+#define SEM_PROCESS_PATH "/tmp/sem_shm"
 #define INITIAL_SEM_VALUE 1
 
 //DECLARACIÓN DE ESTRUCUTRA PARA UN PROCESO
@@ -45,21 +46,23 @@ typedef struct Proceso{
 typedef struct SHM_Planificador{
     int planificador_pid;
     int pid_proceso;
+    int procesos_registrados;
 }SHM_Planificador;
 
-//DECLARACIÓN DE VARIABLES GLOBALES
+//DECLARACIÓN DE VARIABLES DE PLANIFICADOR
 SHM_Planificador *shm_planificador;
 sem_t *semaforo_shm;
+sem_t *semaforo_procesos;
 
 //DEFINICIÓN DE FUNCIONES PARA PLANIFICADOR
 
 //Inicializar memoria compartida: Crear espacios de memoria 
 //que seran usados por el planificador y procesos
-void inicializar_memoria_compartida();      
+void *inicializar_memoria_compartida(const char *path, int id, size_t size);      
 
 //Inicializar semaforos: Inicializar semaforos dentro de la memoria
 //compartida para evitar condiciones de carrera y administrar procesos
-void inicializar_semaforos();
+sem_t *inicializar_semaforos(const char *path, int init);
 
 //Encolar proceso(): Encola la estructura de un proceso 
 void encolar_proceso(pid_t pid, cola *cola_procesos);        
@@ -78,7 +81,7 @@ void detener_proceso(pid_t pid);
 
 //Iniciar planificador(): Inicializa los valores, estructuras, memoria compartida y
 //semaforos para el planificador
-void iniciar_planificador();
+void iniciar_planificador(pid_t pid_planificador);
 
 //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el
 //planificador.
@@ -87,7 +90,7 @@ void limpiar_planificador(cola *cola_procesos);
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 //Unirse a SHM(): Función para que un proceso se una a la memoria compartida para
 //comunicarse con el planificador.
-void * unirse_memoria_compartida();        
+void *unirse_memoria_compartida(const char *path, int id, size_t size);
 
 //Registrar proceso(): Función para enviar el PID del proceso al planificador y sea
 //considerando para la planificación con la Queue.
