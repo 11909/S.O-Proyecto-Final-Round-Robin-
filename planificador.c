@@ -104,11 +104,11 @@ Proceso *desencolar_proceso(cola *cola_procesos){
 }
 
 void ejecutar_proceso(pid_t pid){
-    kill(pid, SIGCONT);
+    kill(pid, CONTINUAR_PROCESO);
 }
 
 void detener_proceso(pid_t pid){
-    kill(pid, SIGSTOP);
+    kill(pid, DETENER_PROCESO);
 }
 
 void iniciar_planificador(pid_t pid_planificador){
@@ -126,7 +126,7 @@ void limpiar_planificador(cola *cola_procesos){
     while(!Empty(cola_procesos)){
         proceso = desencolar_proceso(cola_procesos);
         pid_proceso = proceso->pid;
-        kill(pid_proceso, SIGTERM);
+        kill(pid_proceso, MATAR_PROCESO);
     }
 
     if(sem_unlink(SEM_SHM_PATH) == -1){

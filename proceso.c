@@ -39,14 +39,35 @@ sem_t *acceder_semaforo(const char *path){
     return semaforo;
 }
 
-void registrar_proceso(sem_t *semaforo, pid_t pid_planificador, pid_t pid_proceso){
-    
+void registrar_proceso(sem_t *semaforo_shm, sem_t *semaforo_proceso, pid_t pid_proceso, SHM_Planificador *planificador, volatile sig_atomic_t *signal_planificador){
+    pid_t pid_planificador;
+
+    sem_wait(semaforo_proceso);
+    sem_wait(semaforo_shm);
+    pid_planificador = planificador->planificador_pid;
+    planificador->pid_proceso = pid_proceso;
+    sem_post(semaforo_shm);
+
+    kill(pid_planificador, REGISTRAR_PROCESO);
+
+    while(*signal_planificador == 0){
+        usleep(1000);
+    }
+    *signal_planificador = 0;
+
+    sem_post(semaforo_proceso);
 }
 
-void realizar_proceso(){
-
+void realizar_proceso(volatile sig_atomic_t *signal_planificador, volatile sig_atomic_t *signal_proceso){
+    if(*signal_planificador == 1){
+        *signal_proceso = 1;
+    }
+    *signal_planificador = 0;
 }
 
-void detener_ejecucion(){
-
+void detener_ejecucion(volatile sig_atomic_t *signal_planificador, volatile sig_atomic_t *signal_proceso){
+    if(*signal_planificador == 1){
+        *signal_proceso = 0;
+    }
+    *signal_planificador = 0;
 }

@@ -54,6 +54,13 @@ SHM_Planificador *shm_planificador;
 sem_t *semaforo_shm;
 sem_t *semaforo_procesos;
 
+//DEFINICIÓN DE SEÑALES USADAS
+#define DETENER_PROCESO SIGSTOP
+#define CONTINUAR_PROCESO SIGCONT
+#define REGISTRAR_PROCESO SIGUSR1
+#define PROCESO_REGISTRADO SIGUSR2
+#define MATAR_PROCESO SIGTERM
+
 //DEFINICIÓN DE FUNCIONES PARA PLANIFICADOR
 
 //Inicializar memoria compartida: Crear espacios de memoria 
@@ -88,6 +95,7 @@ void iniciar_planificador(pid_t pid_planificador);
 void limpiar_planificador(cola *cola_procesos);
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
+
 //Unirse a SHM(): Función para que un proceso se una a la memoria compartida para
 //comunicarse con el planificador.
 void *unirse_memoria_compartida(const char *path, int id, size_t size);
