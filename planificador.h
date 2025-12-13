@@ -40,26 +40,32 @@ OBSERVACIONES:
 //entonces se debe usar casting para la interacción entre planificador y estructura
 typedef struct Proceso{
     int pid;
+    int estado;
 }Proceso;
 
 //DECLARACIÓN DE ESTRUCTURA PARA LA MEMORIA COMPARTIDAS
 typedef struct SHM_Planificador{
     int planificador_pid;
     int pid_proceso;
+    int estado_proceso;
     int procesos_registrados;
 }SHM_Planificador;
 
-//DECLARACIÓN DE VARIABLES DE PLANIFICADOR
-SHM_Planificador *shm_planificador;
-sem_t *semaforo_shm;
-sem_t *semaforo_procesos;
+//DEFINICIÓN DE ESTADOS DE PROCESO
+#define EJECUTANDO 1
+#define PAUSADO 2
+#define TERMINADO 3
+#define VACIO 0
 
 //DEFINICIÓN DE SEÑALES USADAS
-#define DETENER_PROCESO SIGSTOP
-#define CONTINUAR_PROCESO SIGCONT
-#define REGISTRAR_PROCESO SIGUSR1
+//SEÑALES DE PLANIFICADOR -> PROCESO
 #define PROCESO_REGISTRADO SIGUSR2
+#define CONTINUAR_PROCESO SIGCONT
+#define DETENER_PROCESO SIGSTOP
 #define MATAR_PROCESO SIGTERM
+
+//SEÑALES PROCESO -> PLANIFICADOR
+#define REGISTRAR_PROCESO SIGUSR1
 
 //DEFINICIÓN DE FUNCIONES PARA PLANIFICADOR
 
@@ -69,10 +75,12 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size);
 
 //Inicializar semaforos: Inicializar semaforos dentro de la memoria
 //compartida para evitar condiciones de carrera y administrar procesos
-sem_t *inicializar_semaforos(const char *path, int init);
+sem_t *inicializar_semaforo(const char *path, int init);
+
+void inicializar_cola_procesos(cola *cola_procesos);
 
 //Encolar proceso(): Encola la estructura de un proceso 
-void encolar_proceso(pid_t pid, cola *cola_procesos);        
+void encolar_proceso(pid_t pid, cola *cola_procesos);
 
 //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar
 //despues lo retorna a la cola tran ejecutar el quantum.
@@ -88,11 +96,11 @@ void detener_proceso(pid_t pid);
 
 //Iniciar planificador(): Inicializa los valores, estructuras, memoria compartida y
 //semaforos para el planificador
-void iniciar_planificador(pid_t pid_planificador);
+SHM_Planificador *iniciar_planificador(pid_t pid_planificador);
 
 //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el
 //planificador.
-void limpiar_planificador(cola *cola_procesos);
+void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador);
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 

@@ -17,8 +17,6 @@ OBSERVACIONES:
 */
 #include "planificador.h"
 
-int shm_planificador_id;
-
 /*
 void inicializar_memoria_compartida();
 Descripción: Inicializa la memoria compartida para la comunicación del planificador con procesos
@@ -65,13 +63,20 @@ Devuelve:
 Observaciones:  El semoforo esta declarado en la cabecera, entonces es de acceso global para planificador
                 y procesos.
 */
-sem_t *inicializar_semaforos(const char *path, int init){
-    semaforo_shm = sem_open(path, O_CREAT, 0644, init);
+sem_t *inicializar_semaforo(const char *path, int init){
+    sem_t *semaforo;
+    semaforo = sem_open(path, O_CREAT, 0644, init);
 
-    if(semaforo_shm == SEM_FAILED){
+    if(semaforo == SEM_FAILED){
         perror("ERROR: sem_open() en inicializar_semaforos()");
         return NULL;
     }
+
+    return semaforo;
+}
+
+void inicializar_cola_procesos(cola *cola_procesos){
+    Initialize(cola_procesos);
 }
 
 void encolar_proceso(pid_t pid, cola *cola_procesos){
@@ -111,21 +116,26 @@ void detener_proceso(pid_t pid){
     kill(pid, DETENER_PROCESO);
 }
 
-void iniciar_planificador(pid_t pid_planificador){
-    shm_planificador = (SHM_Planificador*) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
-    semaforo_shm = inicializar_semaforos(SEM_SHM_PATH, INITIAL_SEM_VALUE);
-    semaforo_procesos = inicializar_semaforos(SEM_PROCESS_PATH, INITIAL_SEM_VALUE);
+SHM_Planificador *iniciar_planificador(pid_t pid_planificador){
+    SHM_Planificador *planificador;
 
-    shm_planificador->procesos_registrados = 0;
-    shm_planificador->planificador_pid = (int) pid_planificador;
+    planificador = (SHM_Planificador *) calloc(1, sizeof(SHM_Planificador *));
+
+    planificador = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
+
+    planificador->procesos_registrados = 0;
+    planificador->planificador_pid = (int) pid_planificador;
+    planificador->estado_proceso = VACIO;
+
+    return planificador;
 }
 
-void limpiar_planificador(cola *cola_procesos){
+void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador){
     Proceso *proceso;
     pid_t pid_proceso;
     while(!Empty(cola_procesos)){
         proceso = desencolar_proceso(cola_procesos);
-        pid_proceso = proceso->pid;
+        pid_proceso = (pid_t) proceso->pid;
         kill(pid_proceso, MATAR_PROCESO);
     }
 
@@ -134,14 +144,14 @@ void limpiar_planificador(cola *cola_procesos){
         return NULL;
     }
 
-    if(shmdt(shm_planificador) == -1){
+    if(shmdt(planificador) == -1){
         perror("ERROR: shmdt en limpiar_planificador()");
         return NULL;
     }
 
-    if(shmctl(shm_planificador_id, IPC_RMID, NULL) == -1){
-        perror("ERROR: shmctl() en limpiar_planificador()");
-        return NULL;
-    }
+    // if(shmctl(shm_id, IPC_RMID, NULL) == -1){
+    //     perror("ERROR: shmctl() en limpiar_planificador()");
+    //     return NULL;
+    // }
 }
 
