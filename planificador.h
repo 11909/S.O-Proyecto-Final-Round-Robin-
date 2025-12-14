@@ -46,16 +46,8 @@ typedef struct Proceso{
 //DECLARACIÓN DE ESTRUCTURA PARA LA MEMORIA COMPARTIDAS
 typedef struct SHM_Planificador{
     int planificador_pid;
-    int pid_proceso;
-    int estado_proceso;
     int procesos_registrados;
 }SHM_Planificador;
-
-//DEFINICIÓN DE ESTADOS DE PROCESO
-#define EJECUTANDO 1
-#define PAUSADO 2
-#define TERMINADO 3
-#define VACIO 0
 
 //DEFINICIÓN DE SEÑALES USADAS
 //SEÑALES DE PLANIFICADOR -> PROCESO
@@ -77,14 +69,14 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size);
 //compartida para evitar condiciones de carrera y administrar procesos
 sem_t *inicializar_semaforo(const char *path, int init);
 
-void inicializar_cola_procesos(cola *cola_procesos);
+void inicializar_cola_procesos(cola_dinamica *cola_procesos);
 
 //Encolar proceso(): Encola la estructura de un proceso 
-void encolar_proceso(pid_t pid, cola *cola_procesos);
+void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos);
 
 //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar
 //despues lo retorna a la cola tran ejecutar el quantum.
-Proceso *desencolar_proceso(cola *cola_procesos);               
+Proceso *desencolar_proceso(cola_dinamica *cola_procesos);               
 
 //Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar
 //enviando una señal para indicar ejecución al proceso.
@@ -100,7 +92,7 @@ SHM_Planificador *iniciar_planificador(pid_t pid_planificador);
 
 //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el
 //planificador.
-void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador);
+void limpiar_planificador(cola_dinamica *cola_procesos, SHM_Planificador *planificador);
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 

@@ -230,7 +230,7 @@ void Dyn_Flip(cola_dinamica *c){
 	
 	Dyn_Initialize(&aux_c);
 	if(Dyn_Empty(c)){
-		printf("Error: Flip(c) la pila esta vacia");
+		printf("Error: Flip(c) la cola esta vacia");
 		exit(1);
 	}
 	
@@ -248,5 +248,66 @@ void Dyn_Flip(cola_dinamica *c){
 		Dyn_Queue(c, aux_e);
 	}
 	
+	return;
+}
+
+
+/*
+void Dyn_Destroy_Node(cola_dinamica *c, int i);
+Descripción: Recibe una cola y la posición de un elemento en ella, para eliminar el elemento en
+			 esa posición y reodenar los nodos.
+Recibe: cola *c (Referencia a la cola "c" a operar)
+		int i	(Posición del elemento a eliminar en la cola)
+Devuelve:
+Observaciones: El elemento anterior al elemento a eliminar, ahora debe de apuntar
+			   al elemento posterior al elemento a eliminar.
+*/
+void Dyn_Destroy_Node(cola_dinamica *c, int i){
+	nodo *nodo_anterior = NULL;
+	nodo *nodo_a_destruir = NULL;
+	int j;
+
+	if(Dyn_Empty(c)){
+		printf("ERROR: Dyn_Destroy_Node(c,i) la cola esta vacia\n");
+		exit(1);
+	}
+
+	if(i > c->num_elem || i <= 0)
+	{
+		printf("ERROR: Dyn_Destroy_Node(c,i) i se encuentra fuera del rango\n");
+		exit(1);
+	}
+
+	//SE ELIMINA EL PRIMER ELEMENTO DE LA COLA
+	if(i == 1){
+		nodo_a_destruir = c->frente;
+		c->frente = c->frente->siguiente;
+
+		free(nodo_a_destruir);
+		c->num_elem--;
+		if(c->num_elem == 0){
+			c->final = NULL;
+		}
+	}
+	//LA COLA TIENE MÁS DE UN ELEMENTO
+	else{
+		nodo_anterior = c->frente;
+		
+		for(j = 1; j < i - 1; j++){
+			nodo_anterior = nodo_anterior->siguiente;
+		}
+	
+		nodo_a_destruir = nodo_anterior->siguiente;
+	
+		nodo_anterior->siguiente = nodo_a_destruir->siguiente;
+	
+		if(nodo_a_destruir == c->final){
+			c->final = nodo_anterior;
+		}
+	
+		free(nodo_a_destruir);
+		c->num_elem--;
+	}
+
 	return;
 }
