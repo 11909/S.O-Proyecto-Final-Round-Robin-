@@ -49,7 +49,5 @@ elemento_dinamico Dyn_Final(cola_dinamica * c);				//Final (Final): Recibe una c
 elemento_dinamico Dyn_Element(cola_dinamica *c, int i); 	// Recibe una cola y un número de elemento de 1 al tamaño de la cola y retorna el elemento de esa posición.
 int Dyn_Size(cola_dinamica *c);								//Tamaño (Size): Retorna el tamaño de la cola 	
 void Dyn_Destroy(cola_dinamica * c);						//Eliminar cola (Destroy): Recibe una cola y la libera completamente.
-void Dyn_Flip(cola_dinamica *c);							//Voltear cola (Flip): Recibe una cola voltea sus elementos, donde el frente sera el
-															//final, y el final el frente.
-void Dyn_Destroy_Node(cola_dinamica *c, int i);			//Destruir elemento(Destroy_Element): Recibe la posición de un elemento en la cola, elimina el nodo
-															//y reordena los nodos.
+void Dyn_Flip(cola_dinamica *c);							//Voltear cola (Flip): Recibe una cola voltea sus elementos, donde el frente sera el final, y el final el frente.
+void Dyn_Destroy_Node(cola_dinamica *c, int i);				//Destruir elemento(Destroy_Element): Recibe la posición de un elemento en la cola, elimina el nodo y reordena los nodos.

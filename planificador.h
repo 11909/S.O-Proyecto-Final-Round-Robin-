@@ -36,7 +36,7 @@ void inicializar_cola_procesos(cola_dinamica *cola_procesos);
 Registro desencolar_registro(ColaRegistros *cola_registro);
 
 //Encolar proceso(): Encola la estructura de un proceso 
-void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, int estado_proceso);
+void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estado_proceso);
 
 //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar
 //despues lo retorna a la cola tran ejecutar el quantum.
@@ -48,7 +48,7 @@ int buscar_pid(ColaProcesos *cola_procesos, int pid);
 
 //Cambiar estado de pid(): Va a la posición indicada en la cola y obtiene el Proceso en
 //esa posición, despues cambia el estado del proceso.
-void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, int estado);
+void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo);
 
 //Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar
 //enviando una señal para indicar ejecución al proceso.

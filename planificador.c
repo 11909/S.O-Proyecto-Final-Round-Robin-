@@ -79,8 +79,8 @@ sem_t *inicializar_semaforo(const char *path, int init){
 
 /*
 void inicializar_cola_procesos(ColaProcesos *cola_procesos)
-Descripción: 
-Recibe:
+Descripción: Reciba una cola de procesos y la inicializa como una cola dinamica
+Recibe: colaProcesos *cola_procesos (Dirección/Referencia de la cola dinamica)
 Devuelve:
 Observaciones:  
 */
@@ -89,9 +89,9 @@ void inicializar_cola_procesos(ColaProcesos *cola_procesos){
 }
 
 /*
-;
-Descripción: 
-Recibe:
+void inicializar_cola_registros(ColaRegistros *cola_registro)
+Descripción: Reciba una cola de registros y la inicializa como una cola estatica circular
+Recibe: colaRegistro *cola_registro (Dirección/Referencia de la cola estatica)
 Devuelve:
 Observaciones:  
 */
@@ -99,14 +99,23 @@ void inicializar_cola_registros(ColaRegistros *cola_registro){
     Est_Initialize(cola_registro);
 }
 
+//Desencolar registro(): Desencola un registro que se encuentra la cola estatica de
+//registros. 
+Registro desencolar_registro(ColaRegistros *cola_registro){
+
+}
+
 /*
-;
-Descripción: 
-Recibe:
+void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos)
+Descripción: Recibe un pid y el estado acutal del proceso, para despues crear
+             un elemento de Proceso y encolarlo en la cola de procesos.
+Recibe: pid_t pid (PID del proceso a encolar en la cola de procesos),
+        ColaProcesos *cola_procesos (Dirección/Referencia de la cola de procesos para encolar),
+        EstadoProceso estado_proceso (Valor enteror para representar el estado con el que el proceso se encolara)
 Devuelve:
 Observaciones:  
 */
-void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos){
+void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estado_proceso){
     Proceso *proceso = (Proceso *) calloc(1, sizeof(Proceso));
 
     if(proceso == NULL){
@@ -116,83 +125,97 @@ void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos){
 
     proceso->pid = (int) pid;
 
-    Queue(cola_procesos, (elemento)proceso);
+    Dyn_Queue(cola_procesos, (ElementoColaProcesos)proceso);
 }
 
 /*
-;
-Descripción: 
-Recibe:
-Devuelve:
-Observaciones:  
+Proceso *desencolar_proceso(cola *cola_procesos)
+Descripción: Recibe una cola de proesos, comprueba que tenga elementos que
+             pueda desencolar. Retorna el elemento desencolado como un Proceso
+Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola dinamica a desencolar)
+Devuelve: Proceso * (Dirección/Referencia de Proceso desencolado)
+Observaciones: Dado que se retorna la dirección/referencia del proceso desencolado, se puede
+               hacer modificaciones directas.
 */
-Proceso *desencolar_proceso(cola *cola_procesos){
-    elemento e;
+Proceso *desencolar_proceso(ColaProcesos *cola_procesos){
+    ElementoColaProcesos e;
     Proceso *p;
 
-    if(Empty(cola_procesos)){
+    if(Dyn_Empty(cola_procesos)){
         printf("ERROR: La cola esta vacia. No hay procesos por sacar\n");
         return;
     }
     
-    e = Dequeue(cola_procesos);
+    e = Dyn_Dequeue(cola_procesos);
 
     p = (Proceso *) e;
 
     return p;
 }
 
+//Buscar pid(): Busca un PID dentro de la cola de procesos, retorna la posición
+//donde se encuentra el Proceso que tiene el mismo PID
+int buscar_pid(ColaProcesos *cola_procesos, int pid){
+    
+}
+
+//Cambiar estado de pid(): Va a la posición indicada en la cola y obtiene el Proceso en
+//esa posición, despues cambia el estado del proceso.
+void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo){
+
+}
+
 /*
-;
-Descripción: 
-Recibe:
+void ejecutar_proceso(pid_t pid)
+Descripción: Envia una señal al proceso con ese PID para indicar que puede ejecutarse
+Recibe: pid_t pid (PID del proceso que puede ejecutarse en ese momento)
 Devuelve:
-Observaciones:  
+Observaciones:
 */
 void ejecutar_proceso(pid_t pid){
     kill(pid, CONTINUAR_PROCESO);
 }
 
 /*
-;
-Descripción: 
-Recibe:
+void detener_proceso(pid_t pid)
+Descripción: Envia una señal al proceso con ese PID para indicar que debe pausar su ejecución
+Recibe: pid_t pid (PID del proceso que debe pausar en ese momento)
 Devuelve:
 Observaciones:  
 */
 void detener_proceso(pid_t pid){
-    kill(pid, DETENER_PROCESO);
+    kill(pid, PAUSAR_PROCESO);
 }
 
 /*
-;
-Descripción: 
-Recibe:
-Devuelve:
+SHM_Planificador *iniciar_planificador(pid_t pid_planificador)
+Descripción: Inicializa a la estructura del planificado en la memoria compartida.
+Recibe: pid_t pid (PID del planificador)
+Devuelve: SHM_Planificador * (Dirección/Referencia del segmento donde se enceuntra la memoria compartidad con la estructura)
 Observaciones:  
 */
 SHM_Planificador *iniciar_planificador(pid_t pid_planificador){
     SHM_Planificador *planificador;
 
-    planificador = (SHM_Planificador *) calloc(1, sizeof(SHM_Planificador *));
-
     planificador = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
-
+    
     planificador->procesos_registrados = 0;
     planificador->planificador_pid = (int) pid_planificador;
-    planificador->estado_proceso = VACIO;
+    
+    inicializar_cola_registros(&planificador->cola_registros);
 
     return planificador;
 }
 
 /*
-;
-Descripción: 
-Recibe:
+void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planificador)
+Descripción: Separa, elimina y limpia las estructuras que usa el planificador.
+Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola de procesos con procesos registrados)
+        SHM_Planificador *planificador (Dirección/Referencia de segmento con memoria compartida)
 Devuelve:
 Observaciones:  
 */
-void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador){
+void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planificador){
     Proceso *proceso;
     pid_t pid_proceso;
     while(!Empty(cola_procesos)){
@@ -200,6 +223,10 @@ void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador){
         pid_proceso = (pid_t) proceso->pid;
         kill(pid_proceso, MATAR_PROCESO);
     }
+
+    Dyn_Destroy(cola_procesos);
+
+    Est_Destroy(&planificador->cola_registros);
 
     if(sem_unlink(SEM_SHM_PATH) == -1){
         perror("ERROR: sem_unlink() en limpiar_planificador()");

@@ -53,6 +53,7 @@ OBSERVACIONES:
 
 //DECLARACIÓN DE TIPOS PARA EL PLANIFICADOR
 typedef elemento_estatico Registro;
+typedef elemento_dinamico ElementoColaProcesos;
 typedef cola_estatica ColaRegistros;
 typedef cola_dinamica ColaProcesos;
 typedef int EstadoProceso;
