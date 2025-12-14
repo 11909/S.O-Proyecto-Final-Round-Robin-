@@ -214,36 +214,6 @@ void Est_Destroy(cola_estatica * c)
 }
 
 /*
-int Search(cola *c, elemento e);
-Descripción: Recibe una cola y un elemento, busca el elemento
-			 en la cola, y retorna su posicion en la cola.
-Recibe: cola *c (Referencia a la cola "c" donde buscar)
-		elemento e (Elemento a buscar en la cola "c")
-Devuelve: Posicion del elemento "e" en la cola "c"
-Observaciones: En caso de que el elemento "e" no exista
-			   en la cola "c", se retorna el valor 0.
-*/
-int Est_Search(cola_estatica * c, elemento_estatico e){
-	int pos = 0;
-	int i, n;
-	elemento_estatico aux;
-	if(Est_Empty(c)){
-		printf("Error: Search(c,e) la pila esta vacia");
-		exit(1);
-	}
-	
-	for(i = 1; i <= Est_Size(c); i++){
-		aux = Est_Element(c, i);
-		if(aux.c == e.c && aux.n == e.n && aux.f == e.f){
-			pos = i;
-			break;
-		}
-	}
-	
-	return pos;
-}
-
-/*
 void Flip(cola *c);
 Descripción: Recibe una cola y voltea el orden de los elementos
 			 en la cola.

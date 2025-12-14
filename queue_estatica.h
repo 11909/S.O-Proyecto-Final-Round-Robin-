@@ -14,22 +14,19 @@ se le asigna una cantidad fija de memoria para esa estructura
 antes de la ejecución del programa. 
 */
 
+//LIBRERIA CON DEFINICIONES EN COMÚN
+#include "queue_common.h"
+
 //DEFINICIONES DE CONSTANTES
 #define MAX_ELEMENT 100
-#define TRUE	1
-#define FALSE	0
-
-//DEFINICIONES DE TIPOS DE DATO
-
-//Definir un boolean (Se modela con un "char")
-typedef unsigned char boolean;
+#define REGISTRAR_PROCESO 1
+#define ELIMINAR_PROCESO 2
 
 //Definir un elemento (Se modela con una estructura "elemento")
 typedef struct elemento_estatico
 {
-	char c;
-	int n;
-	float f;
+	int pid;
+	int solicitud_proceso;
 } elemento_estatico;
 
 //Definir una cola (Se modela con una estructura que incluye un arreglo estatico de "elemento",
@@ -53,7 +50,5 @@ elemento_estatico Est_Element(cola_estatica *c, int i); 	// Recibe una cola y un
 int Est_Size(cola_estatica *c);					            //Tamaño (Size): Retorna el tamaño de la cola 	
 elemento_estatico Est_Element(cola_estatica * c, int i);	//Recibe una cola y un número de elemento de 1 al tamaño de la cola y retorna el elemento de esa posición
 void Est_Destroy(cola_estatica * c);				        //Eliminar cola (Destroy): Recibe una cola y la libera completamente.
-int Est_Search(cola_estatica *c, elemento_estatico e); 	    //Buscar posicion (Search): Recibe una cola y un elemento, devuelve la posicion del
-									                        //elemento en la cola, o un 0 en caso contrario.
 void Est_Flip(cola_estatica *c);					        //Voltear cola (Flip): Recibe una cola voltea sus elementos, donde el frente sera el
 									                        //final, y el final el frente.

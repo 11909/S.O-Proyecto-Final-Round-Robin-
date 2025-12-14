@@ -14,15 +14,10 @@ cuando se le asigna memoria a medida que es necesitada,
 durante la ejecución del programa. 
  
 */
-
-//DEFINICIONES DE CONSTANTES
-#define TRUE	1
-#define FALSE	0
+//LIBRERIA CON DEFINICIONES EN COMÚN
+#include "queue_common.h"
 
 //DEFINICIONES DE TIPOS DE DATO
-
-//Definir un boolean (Se modela con un "char")
-typedef unsigned char boolean;
 
 //Definir un elemento (Se modela con una estructura "elemento")
 //Se usa un apuntador generico (void *) para que la estructura TAD Cola funcione
