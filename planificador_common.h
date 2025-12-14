@@ -1,3 +1,21 @@
+/*
+LIBRERIA: Cabecera de ATRIBUTOS EN COMÚN PARA PLANIFICADOR ROUND ROBIN
+AUTOR:  Rodriguez Guarneros Hector Daniel 
+        Mendez Rosales Miguel Angel
+        (C) Noviembre 2025
+VERSIÓN: 1.0 Diciembre 2024
+
+DESCRIPCIÓN: Atributos Comunes para Planificador Round Robin.
+Definición de estructuras, constantes y tipos de variables que
+hara uso el planificador y los procesos que formen parte del planificador,
+o vayan a formar parte del planificador.
+
+OBSERVACIONES:  
+*/
+
+#ifndef PLANIFICADOR_COMMON_H
+#define PLANIFICADOR_COMMON_H
+
 //LLAMADA DE LIBRERIAS
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +27,7 @@
 #include <sys/shm.h>
 #include <semaphore.h>
 #include <signal.h>
-#include "queue.h"
+#include "queue_dinamica.h"
 #include "queue_estatica.h"
 
 //DECLARACIÓN DE CONSTANTES
@@ -53,3 +71,5 @@ typedef struct SHM_Planificador{
     int procesos_registrados;
     ColaRegistros cola_registros;
 }SHM_Planificador;
+
+#endif

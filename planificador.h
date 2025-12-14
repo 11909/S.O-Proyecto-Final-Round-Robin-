@@ -1,16 +1,15 @@
 /*
-LIBRERIA: Cabecera de PLANIFICADOR ROUND ROBIN
+LIBRERIA: Cabecera de FUNCIONES PARA PLANIFICADOR ROUND ROBIN
 AUTOR:  Rodriguez Guarneros Hector Daniel 
         Mendez Rosales Miguel Angel
-        (C) Noviembre 2024
-VERSIÓN: 1.0 Noviembre 2024
+        (C) Noviembre 2025
+VERSIÓN: 1.0 Diciembre 2025
 
-DESCRIPCIÓN: Planificador Round Robin.
-Algoritmo de planificación que hace uso de una cola
-de manera que todos los procesos que quieren se ejecutados
-entran a la cola, y el algoritmo realiza un quantum para
-ejecutar en el procesador una cantidad especifica de tiempo
-y despues devolver a la cola.
+DESCRIPCIÓN: Proceso de un Planificador Round.
+Algoritmo de planificación que hace uso de una cola de manera 
+que todos los procesos que quieren se ejecutados entran a la cola,
+y el algoritmo realiza un quantum para ejecutar en el procesador 
+una cantidad especifica de tiempo y despues volver a encolar en la cola.
 
 OBSERVACIONES:  
  

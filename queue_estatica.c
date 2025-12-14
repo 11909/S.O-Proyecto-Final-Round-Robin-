@@ -13,7 +13,7 @@ OBSERVACIONES: Hablamos de una Estructura de datos estática cuando
 se le asigna una cantidad fija de memoria para esa estructura 
 antes de la ejecución del programa. 
 
-COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c TADColaEst.c
+COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c queue_estatica.c
 */
 
 //LIBRERAS

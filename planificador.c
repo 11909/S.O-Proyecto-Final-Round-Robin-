@@ -18,7 +18,7 @@ OBSERVACIONES:
 #include "planificador.h"
 
 /*
-void *inicializar_memoria_compartida(const char *path, int id, size_t size);
+void *inicializar_memoria_compartida(const char *path, int id, size_t size)
 Descripción: Inicializa una memoria compartida y retonar la dirección donde se encuentra.
 Recibe: const char *path (Ruta al archivo base para generar la clave),
         int id (Clave del proyecto para crear llave),
@@ -58,7 +58,7 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size){
 }
 
 /*
-void inicializar_semaforos();
+void inicializar_semaforos()
 Descripción: Recibe la ruta hacía un semaforo con nombre y lo inicializa
 Recibe: const char *path (Ruta al archivo del semaforo con nombre),
         int init (Valor con el que se inicializa el semaforo)
@@ -78,21 +78,34 @@ sem_t *inicializar_semaforo(const char *path, int init){
 }
 
 /*
-void inicializar_semaforos();
-Descripción: Inicializa al semaforo que servira para indicar el acceso a la memoria compartida
+void inicializar_cola_procesos(ColaProcesos *cola_procesos)
+Descripción: 
 Recibe:
 Devuelve:
-Observaciones:  El semoforo esta declarado en la cabecera, entonces es de acceso global para planificador
-                y procesos.
+Observaciones:  
 */
 void inicializar_cola_procesos(ColaProcesos *cola_procesos){
     Dyn_Initialize(cola_procesos);
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 void inicializar_cola_registros(ColaRegistros *cola_registro){
     Est_Initialize(cola_registro);
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos){
     Proceso *proceso = (Proceso *) calloc(1, sizeof(Proceso));
 
@@ -106,6 +119,13 @@ void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos){
     Queue(cola_procesos, (elemento)proceso);
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 Proceso *desencolar_proceso(cola *cola_procesos){
     elemento e;
     Proceso *p;
@@ -122,14 +142,35 @@ Proceso *desencolar_proceso(cola *cola_procesos){
     return p;
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 void ejecutar_proceso(pid_t pid){
     kill(pid, CONTINUAR_PROCESO);
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 void detener_proceso(pid_t pid){
     kill(pid, DETENER_PROCESO);
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 SHM_Planificador *iniciar_planificador(pid_t pid_planificador){
     SHM_Planificador *planificador;
 
@@ -144,6 +185,13 @@ SHM_Planificador *iniciar_planificador(pid_t pid_planificador){
     return planificador;
 }
 
+/*
+;
+Descripción: 
+Recibe:
+Devuelve:
+Observaciones:  
+*/
 void limpiar_planificador(cola *cola_procesos, SHM_Planificador *planificador){
     Proceso *proceso;
     pid_t pid_proceso;

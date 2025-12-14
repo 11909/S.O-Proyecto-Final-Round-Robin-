@@ -14,11 +14,11 @@ cuando se le asigna memoria a medida que es necesitada,
 durante la ejecución del programa. 
 
 
-COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c TADColaEst.c
+COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c queue.c
 */
 
 //LIBRERAS
-#include "queue.h"
+#include "queue_dinamica.h"
 #include <stdlib.h>
 #include <stdio.h>
 //DEFINICIÓN DE FUNCIONES
