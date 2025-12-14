@@ -18,12 +18,14 @@ OBSERVACIONES:
 #include "planificador.h"
 
 /*
-void inicializar_memoria_compartida();
-Descripción: Inicializa la memoria compartida para la comunicación del planificador con procesos
-Recibe:
-Devuelve:
-Observaciones:  La función hace uso de las constantes definidos en la cabecera del planificador
-                en "planificador.h"
+void *inicializar_memoria_compartida(const char *path, int id, size_t size);
+Descripción: Inicializa una memoria compartida y retonar la dirección donde se encuentra.
+Recibe: const char *path (Ruta al archivo base para generar la clave),
+        int id (Clave del proyecto para crear llave),
+        size_t size (Tamaño de la estructura para el segmento a crear)
+Devuelve: void * (Puntero generico al inicio del segmento de memoria compartida)
+Observaciones:  La función debe hacer uso de las constantes definidos en la cabecera del planificador
+                en "planificador.h" para que se tenga la misma llave para acceder a la memoria compartida
 */
 void *inicializar_memoria_compartida(const char *path, int id, size_t size){
     key_t clave;
@@ -57,11 +59,11 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size){
 
 /*
 void inicializar_semaforos();
-Descripción: Inicializa al semaforo que servira para indicar el acceso a la memoria compartida
-Recibe:
-Devuelve:
-Observaciones:  El semoforo esta declarado en la cabecera, entonces es de acceso global para planificador
-                y procesos.
+Descripción: Recibe la ruta hacía un semaforo con nombre y lo inicializa
+Recibe: const char *path (Ruta al archivo del semaforo con nombre),
+        int init (Valor con el que se inicializa el semaforo)
+Devuelve:   sem_t *(Puntero al semaforo inicializado)
+Observaciones:  El semaforo debe usar la ruta definida de forma global en 
 */
 sem_t *inicializar_semaforo(const char *path, int init){
     sem_t *semaforo;
@@ -75,11 +77,23 @@ sem_t *inicializar_semaforo(const char *path, int init){
     return semaforo;
 }
 
-void inicializar_cola_procesos(cola *cola_procesos){
-    Initialize(cola_procesos);
+/*
+void inicializar_semaforos();
+Descripción: Inicializa al semaforo que servira para indicar el acceso a la memoria compartida
+Recibe:
+Devuelve:
+Observaciones:  El semoforo esta declarado en la cabecera, entonces es de acceso global para planificador
+                y procesos.
+*/
+void inicializar_cola_procesos(ColaProcesos *cola_procesos){
+    Dyn_Initialize(cola_procesos);
 }
 
-void encolar_proceso(pid_t pid, cola *cola_procesos){
+void inicializar_cola_registros(ColaRegistros *cola_registro){
+    Est_Initialize(cola_registro);
+}
+
+void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos){
     Proceso *proceso = (Proceso *) calloc(1, sizeof(Proceso));
 
     if(proceso == NULL){
