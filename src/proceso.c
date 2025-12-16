@@ -90,6 +90,12 @@ Observaciones: La función solamente puede cometer errores en inicializar los pa
                error siginifica que no se ha registrado. Se recomienda hacer un exit().
 */
 int inicializar_proceso(ContextoProceso *proceso, pid_t pid){
+    proceso = (ContextoProceso*) calloc(1, sizeof(ContextoProceso));
+    if(proceso == NULL){
+        printf("ERROR: Asignación de memoria erronea en inicialziar_proceso()");
+        return -1;
+    }
+    
     proceso->shm = (SHM_Planificador*) unirse_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
     if(proceso->shm == (SHM_Planificador *)NULL) return -1;
     

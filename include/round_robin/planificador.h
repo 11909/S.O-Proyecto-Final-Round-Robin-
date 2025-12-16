@@ -59,7 +59,7 @@ void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso
 void ejecutar_proceso(pid_t pid);           
 
 //Detener proceso(): Envia una señal a un proceso para indicar que termino su tiempo de ejecución, iniciando el proceso de seleccionar el siguiente proceso
-void detener_proceso(pid_t pid);
+void pausar_proceso(pid_t pid);
 
 int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planificador, int quantum);      //Iniciar planificador(): Inicializa los valores, estructuras, memoria compartida y semaforos para el planificador
 
@@ -67,10 +67,12 @@ Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador); //Obtene
 
 void tratar_registro(ContextoPlanificador *planificador);      //Tratar registro(): Atiende la cola de registros y realiza las solicitudes de los registros obtenidos.
 
+int planificador_proceso_disponible(ContextoPlanificador *planificador);       //Procesos disponible(): Función que revisa si hay procesos disponibles o por atender en la cola de procesos.
+
+int planificador_ejecuta_proceso(ContextoPlanificador *planificador);  //Ejecutar proceso(): Planificador obtiene el siguiente proceso a ejecutar.
+
+int planificador_pausa_proceso(ContextoPlanificador *planificador);    //Planificador pausa proceso(): Planificador pausa un proceso que acaba de terminar de ejecutar.
+
 void limpiar_planificador(ContextoPlanificador *planificador); //Limpiar(): Función que borra, limpia y termina todas la estructuras usadas por el planificador.
 
-void planificador_ejecuta_proceso(ContextoPlanificador *planificador);
-
-void planificador_pausa_proceso(ContextoPlanificador *planificador);
-
-void imprimir_cola_procesos(ContextoPlanificador *planificador);
+void imprimir_cola_procesos(ContextoPlanificador *planificador);        //Imprimir cola(): Se imprime el estado actual de la cola de procesos

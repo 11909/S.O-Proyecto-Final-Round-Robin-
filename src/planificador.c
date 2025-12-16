@@ -246,7 +246,7 @@ Recibe: pid_t pid (PID del proceso que debe pausar en ese momento)
 Devuelve:
 Observaciones:  
 */
-void detener_proceso(pid_t pid){
+void pausar_proceso(pid_t pid){
     kill(pid, SIGNAL_PAUSAR_PROCESO);
 }
 
@@ -261,6 +261,12 @@ Devuelve:
 Observaciones:  
 */
 int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planificador, int quantum){
+    planificador = (ContextoPlanificador*) calloc(1, sizeof(ContextoPlanificador));
+    if(planificador == NULL){
+        printf("ERROR: Asignación de memoria en iniciar_planificador()");
+        return -1;
+    }
+    
     planificador->shm = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
     if(planificador->shm == (SHM_Planificador*)NULL) return -1;
 
@@ -281,6 +287,13 @@ int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planifica
     return 0;
 }
 
+/*
+Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador)
+Descripción: 
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve:   
+Observaciones:    
+*/
 Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
     int tamano;
     Proceso *proceso_auxiliar;
@@ -302,7 +315,7 @@ Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
         }
     
         if(proceso_auxiliar->estado == PAUSADO || proceso_auxiliar->estado == LISTO){
-            proceso_auxiliar->estado = EJECUTANDO;
+            proceso_auxiliar->estado = LISTO;
             return proceso_auxiliar;
         }
 
@@ -316,6 +329,13 @@ Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
     return NULL;
 }
 
+/*
+void tratar_registro(ContextoPlanificador *planificador)
+Descripción: 
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve: 
+Observaciones:  
+*/
 void tratar_registro(ContextoPlanificador *planificador){
     ColaProcesos *cola_procesos;
     ColaRegistros *cola_registros;
@@ -350,10 +370,96 @@ void tratar_registro(ContextoPlanificador *planificador){
 }
 
 /*
-void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planificador)
+int planificador_proceso_disponible(ContextoPlanificador *planificador)
+Descripción: 
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve: int   (Estado de salida para indicar disponibilidad de procesos en la cola de procesos)
+Observaciones:  0 [Sin procesos disponibles], 1 [Procesos dispnibles]  
+*/
+int planificador_proceso_disponible(ContextoPlanificador *planificador){
+    ColaProcesos *cola_procesos;
+    int resultado;
+
+    cola_procesos = &planificador->cola_procesos;
+
+    resultado = 0;
+    if(Dyn_Empty(cola_procesos)){
+        printf("No hay procesos por tratar en la cola de procesos.\n");
+        resultado= 0;
+    }
+    else{
+        resultado = 1;
+    }
+    
+    return resultado;
+}
+
+/*
+int planificador_ejecuta_proceso(ContextoPlanificador *planificador)
+Descripción: 
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve: int   (Estado de salida de la función)
+Observaciones:  0 [Salida erronea], 1 [Salida correcta]  
+*/
+int planificador_ejecuta_proceso(ContextoPlanificador *planificador){
+    Proceso *proceso;
+    int resultado;
+
+    proceso = obtener_siguiente_proceso(planificador);
+
+    resultado = 0;
+    if(proceso->estado == LISTO){
+        planificador->proceso_actual = proceso;
+        planificador->proceso_actual->estado = EJECUTANDO;
+        ejecutar_proceso(planificador->proceso_actual->pid);
+        resultado = 1;
+    }
+    else{
+        printf("ERROR: El proceso no estaba listo para ser ejecutado");
+        resultado = 0;
+    }
+
+    return resultado;
+}
+
+/*
+int planificador_pausa_proceso(ContextoPlanificador *planificador)
+Descripción: Función comprueba el estado del proceso actual atendido por el planificador. En caso de estar
+             en ejecución, lo pausa y encola el proceso en la cola de procesos. Depues limpia el proceso actual.
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve: int   (Estado de salida de la función)
+Observaciones:  0 [Salida erronea], 1 [Salida correcta]  
+*/
+int planificador_pausa_proceso(ContextoPlanificador *planificador){
+    Proceso *proceso;
+    int resultado;
+
+    resultado = 0;
+    proceso = planificador->proceso_actual;
+    if(proceso == NULL){
+        printf("ERROR: No hay un proceso actual en el planificador\n");
+        resultado = 0;
+    }
+    else if(proceso->estado == EJECUTANDO){
+        pausar_proceso(proceso->pid);
+        encolar_proceso(proceso->pid, &planificador->cola_procesos, PAUSADO);
+        planificador->proceso_actual = NULL;
+
+        resultado = 1;
+    }
+    else{
+        printf("ERROR: El proceso no estaba listo para ser ejecutado");
+        resultado = 0;
+    }
+
+    return resultado;
+}
+
+
+/*
+void limpiar_planificador(ContextoPlanificador *planificador)
 Descripción: Separa, elimina y limpia las estructuras que usa el planificador.
-Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola de procesos con procesos registrados)
-        SHM_Planificador *planificador (Dirección/Referencia de segmento con memoria compartida)
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
 Devuelve:
 Observaciones:  
 */
@@ -385,12 +491,20 @@ void limpiar_planificador(ContextoPlanificador *planificador){
         return NULL;
     }
 
+    free(planificador);
     // if(shmctl(shm_id, IPC_RMID, NULL) == -1){
     //     perror("ERROR: shmctl() en limpiar_planificador()");
     //     return NULL;
     // }
 }
 
+/*
+void imprimir_cola_procesos(ContextoPlanificador *planificador)
+Descripción: Accede al estado actual del planificador e imprime su cola de procesos.
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
+Devuelve:
+Observaciones:  
+*/
 void imprimir_cola_procesos(ContextoPlanificador *planificador){
     int i;
     int pid_proceso;

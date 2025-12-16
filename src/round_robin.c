@@ -1,4 +1,4 @@
-#include "planificador.h"
+#include "round_robin/planificador.h"
 
 //DECLARACIÓN DE VARIABLES GLOBALES
 ContextoPlanificador planificador;
@@ -43,6 +43,13 @@ int main(int argc, char *argv[]){
             limpiar_planificador(&planificador);
         }
 
-        procesar_cola_procesos(&planificador);
+        if(planificador_proceso_disponible(&planificador)){
+            planificador_ejecuta_proceso(&planificador);
+            sleep(planificador.quantum);
+            planificador_pausa_proceso(&planificador);
+        }
+        else{
+            pause();
+        }
     }
 }
