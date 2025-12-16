@@ -15,7 +15,7 @@ y despues devolver a la cola.
 OBSERVACIONES:  
  
 */
-#include "planificador.h"
+#include "round_robin/planificador.h"
 
 /*
 void *inicializar_memoria_compartida(const char *path, int id, size_t size)
@@ -99,14 +99,27 @@ void inicializar_cola_registros(ColaRegistros *cola_registro){
     Est_Initialize(cola_registro);
 }
 
-//Desencolar registro(): Desencola un registro que se encuentra la cola estatica de
-//registros. 
+/*
+Registro desencolar_registro(ColaRegistros *cola_registro)
+Descripción: Función desencola un registro de la cola de registros y lo devuelve.
+Recibe: ColaRegistros *cola_registro (Dirección/Referencia de cola estatica circular con registros)
+Devuelve: Registro (Elemento estatico que tiene los datos del Registro)
+Observaciones:  
+*/
 Registro desencolar_registro(ColaRegistros *cola_registro){
+    Registro r;
 
+    if(Est_Empty(cola_registro)){
+        perror("ERROR: La cola de registros esta vacia\n");
+        exit(1);
+    }
+
+    r = Est_Dequeue(cola_registro);
+    return r;
 }
 
 /*
-void encolar_proceso(pid_t pid, cola_dinamica *cola_procesos)
+void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estado_proceso)
 Descripción: Recibe un pid y el estado acutal del proceso, para despues crear
              un elemento de Proceso y encolarlo en la cola de procesos.
 Recibe: pid_t pid (PID del proceso a encolar en la cola de procesos),
@@ -153,16 +166,66 @@ Proceso *desencolar_proceso(ColaProcesos *cola_procesos){
     return p;
 }
 
-//Buscar pid(): Busca un PID dentro de la cola de procesos, retorna la posición
-//donde se encuentra el Proceso que tiene el mismo PID
+/*
+int buscar_pid(ColaProcesos *cola_procesos, int pid)
+Descripción: Busca un proceso dentro de la cola de procesos que tenga el mismo PID que
+             el que se busca. En caso de encontrarlo retorna su posición, en caso contrario retorna 0.
+Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola dinamica donde se encuentran los procesos),
+        int pid (Valor del PID a buscar en al cola)
+Devuelve: int (Posición dentro de la cola dinamica donde se encuentra el PID)
+Observaciones: La función comprueba que la cola no este vacia entes de hacer la busqueda, en caso de estarlo
+               realiza un exit(). Solo hacerlo cuando la cola este llena.
+*/
 int buscar_pid(ColaProcesos *cola_procesos, int pid){
-    
+    int tamano;
+    int i;
+    int pos;
+    Proceso *proceso_auxiliar;
+
+    if(Dyn_Empty(cola_procesos)){
+        perror("ERROR: La cola de procesos esta vacia. No hay Procesos a buscar\n");
+        exit(1);
+    }
+
+    tamano = Dyn_Size(cola_procesos);
+    pos = 0;
+    for(i = 1; i <= tamano; i++ ){
+        proceso_auxiliar = (Proceso *) Dyn_Element(cola_procesos, i);
+
+        if(proceso_auxiliar->pid == pid){
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
 }
 
-//Cambiar estado de pid(): Va a la posición indicada en la cola y obtiene el Proceso en
-//esa posición, despues cambia el estado del proceso.
+/*
+void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo)
+Descripción: Reciba la posición de un elemento dentro de la cola de procesos y un nuevo estado para ese proceso.
+             modifica el estado del proceso en esa posición por el nuevo estado indicado.
+Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola dinamica donde se encuentran los procesos),
+        int posicion (Posición actual del proceso dentro de la cola),
+        EstadoProceso estado_nuevo (Nuevo estado con el que se modificara al proceso)
+Devuelve:
+Observaciones: 
+*/
 void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo){
+    int tamano;
+    Proceso *proceso_a_modificar;
 
+    tamano = Dyn_Size(cola_procesos);
+
+    if(posicion <= 0 || posicion > tamano){
+        perror("ERROR: La posición esta fuera del rango de la cola. No se puede cambiar su estado");
+        return;
+    }
+
+    proceso_a_modificar = (Proceso *) Dyn_Element(cola_procesos, posicion);
+    proceso_a_modificar->estado = estado_nuevo;
+
+    return;
 }
 
 /*

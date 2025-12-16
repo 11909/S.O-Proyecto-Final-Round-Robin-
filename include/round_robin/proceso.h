@@ -15,7 +15,7 @@ OBSERVACIONES:
  
 */
 //LLAMADA DE LIBRERIAS
-#include "planificador_common.h"
+#include "common/planificador_common.h"
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 

@@ -1,4 +1,4 @@
-#include "planificador.h"
+#include "round_robin/proceso.h"
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 void *unirse_memoria_compartida(const char *path, int id, size_t size){
     key_t clave;

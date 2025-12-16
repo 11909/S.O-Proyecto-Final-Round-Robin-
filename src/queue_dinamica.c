@@ -1,5 +1,5 @@
 /*
-IMPLEMENTACION DE LA LIBRERIA DEL TAD COLA ESTATICA (TADColaEst.h)
+IMPLEMENTACION DE LA LIBRERIA DEL TAD COLA DINÁMICA (TADColaEst.h)
 AUTOR: Edgardo Adrián Franco Martínez (C) Noviembre 2022
 IMPLEMENTA: Rodriguez Guarneros Hector Daniel 
 VERSIÓN: 1.0 Mayo 2024
@@ -9,15 +9,16 @@ Estructura de datos en la que se cumple:
 Los elementos se insertan en un extremo (el posterior) y 
 la supresiones tienen lugar en el otro extremo (frente).
 
-OBSERVACIONES: Hablamos de una Estructura de datos estática cuando 
-se le asigna una cantidad fija de memoria para esa estructura 
-antes de la ejecución del programa. 
+OBSERVACIONES: Hablamos de una Estructura de datos dinámica 
+cuando se le asigna memoria a medida que es necesitada, 
+durante la ejecución del programa. 
 
-COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c queue_estatica.c
+
+COMPILACIÓN PARA GENERAR EL CÓDIGO OBJETO: gcc -c queue.c
 */
 
 //LIBRERAS
-#include "queue_estatica.h"
+#include "tad/queue_dinamica.h"
 #include <stdlib.h>
 #include <stdio.h>
 //DEFINICIÓN DE FUNCIONES
@@ -30,11 +31,13 @@ Devuelve:
 Observaciones: El usuario a creado una cola y c tiene la referencia a ella, 
 si esto no ha pasado se ocasionara un error.
 */
-void Est_Initialize(cola_estatica * c)
+void Dyn_Initialize(cola_dinamica * c)
 {
-	c->frente=-1;
-	c->final=-1;
 	c->num_elem=0;
+	c->frente=NULL;
+	c->final=NULL;
+	
+
 	return;
 }
 
@@ -46,25 +49,22 @@ Devuelve:
 Observaciones: El usuario a creado una cola y ha sido inicializada y c tiene la referencia a ella, 
 si esto no ha pasado se ocasionara un error.
 */
-void Est_Queue(cola_estatica * c, elemento_estatico e)
+void Dyn_Queue(cola_dinamica * c, elemento_dinamico e)
 {
-	
-	if(c->num_elem == MAX_ELEMENT-1)
-	{
-		printf("\nERROR: Queue(c,e) desbordamiento de cola.");
+	nodo* aux;
+	aux= malloc(sizeof(nodo));
+	if (aux==NULL){
+		printf("ERROR: Queue (c,e) desbordamiento de cola");
 		exit(1);
 	}
-	c->final++;
-	if(c->final==MAX_ELEMENT)
-		c->final=0;
-		
-	c->elementos[c->final] = e;
+	aux->e = e;
+	aux->siguiente = NULL;
+	if (c->num_elem > 0)
+		c->final->siguiente = aux;
+	c->final = aux;
 	c->num_elem++;
-	
-	if(c->frente == -1)
-	{
-		c->frente++;
-	}
+	if (c->num_elem == 1)
+		c->frente = c->final;
 	return;
 }
 
@@ -77,28 +77,26 @@ Devuelve: elemento (Elemento desencolado)
 Observaciones: El usuario a creado e inicializado una cola, ademas la cola tiene 
 elementos, si no es así se genera un error y se termina el programa. (Subdesboramiento de Cola)
 */
-elemento_estatico Est_Dequeue(cola_estatica * c)
+elemento_dinamico Dyn_Dequeue(cola_dinamica * c)
 {
-	elemento_estatico e;//Elemento a retornar 
-	if (c->num_elem>0)
+	nodo *aux;
+	elemento_dinamico e;//Elemento a retornar 
+	if(c->num_elem==0)
 	{
-		e=c->elementos[c->frente];
-		c->frente++;
-		if(c->frente==MAX_ELEMENT)
-			c->frente=0;
-		c->num_elem--;
-		
-		if (c->num_elem == 0)
-		{
-			c->frente = -1;
-			c->final = -1;
-		}
-	}
-	else
-	{
-		printf("Error:Dequeue(c) subdesbordamiento de cola");
+		printf("ERROR: Dequeue (c) subdesbordamiento de cola");
 		exit(1);
 	}
+	else 
+	{
+		e=c->frente->e;
+		aux=c->frente;
+		c->frente=c->frente->siguiente;
+		free(aux);
+		c->num_elem--;
+		if(c->num_elem==0)
+			c->final=NULL;
+	}
+
 	//Retornar al elemento
 	return e;
 }
@@ -110,7 +108,7 @@ Recibe: cola *c (Referencia a la cola "c" a verificar)
 Devuelve: boolean TRUE O FALSE
 Observaciones: El usuario a creado una cola y la cola fue correctamente inicializada
 */
-boolean Est_Empty(cola_estatica * c)
+boolean Dyn_Empty(cola_dinamica * c)
 {
 	
 	return (c->num_elem==0)?TRUE:FALSE;
@@ -124,17 +122,11 @@ Devuelve: elemento del frente de la cola
 Observaciones: El usuario a creado una cola,la cola fue correctamente inicializada, esta 
 tiene elementos de lo contrario devolvera ERROR. *No se modifica el TAD
 */
-elemento_estatico Est_Front(cola_estatica * c)
+elemento_dinamico Dyn_Front(cola_dinamica * c)
 {
-	elemento_estatico e;
+	elemento_dinamico e;
 	
-	if(c->num_elem > 0){
-	e=c->elementos[c->frente];
-	}else
-	{
-		printf("Error:Front(c) subdesbordamiento de cola");
-		exit(1);
-	}
+	e=c->frente->e;
 	
 	return e;
 }
@@ -147,17 +139,10 @@ Devuelve: elemento del final de la cola
 Observaciones: El usuario a creado una cola,la cola fue correctamente inicializada, esta 
 tiene elementos de lo contrario devolvera ERROR. *No se modifica el TAD
 */
-elemento_estatico Est_Final(cola_estatica * c)
+elemento_dinamico Dyn_Final(cola_dinamica * c)
 {
-	elemento_estatico e;
-	if(c->num_elem > 0){
-	e=c->elementos[c->final];
-	}else
-	{
-		printf("Error:Final(c) subdesbordamiento de cola");
-		exit(1);
-	}
-	
+	elemento_dinamico e;	
+	e=c->final->e;
 	return e;
 }
 
@@ -169,11 +154,10 @@ Devuelve: int (Tamaño de la cola)
 Observaciones: El usuario a creado una cola,la cola fue correctamente inicializada, esta 
 *No se modifica el TAD
 */
-int Est_Size(cola_estatica * c)
+int Dyn_Size(cola_dinamica * c)
 {
 	int r;
-	r=c->num_elem;
-	
+	r=c->num_elem;	
 	return r;
 }
 
@@ -183,18 +167,25 @@ Descripción: Recibe una cola y un número de elemento de 1 al tamaño de la col
 Devuelve: elemento en la posicion i de la cola
 Observaciones: El número i debera estar entre 1 y el tamaño de la cola, si esta es vacia o mas pequeña se provoca un error.
 */
-elemento_estatico Est_Element(cola_estatica * c, int i)
+elemento_dinamico Dyn_Element(cola_dinamica * c, int i)
 {
-	elemento_estatico r;
-	if(i>0 && i<=c->num_elem)
+	elemento_dinamico r;
+	nodo *aux;
+	int j;
+	
+	if(i>c->num_elem || i<=0)
 	{
-		r=c->elementos[c->frente+(i-1)%MAX_ELEMENT];	
-	}
-	else
-	{
-		printf("Error:Element(c) indice i fuera de rango");
+		printf("ERROR: Element(c,i) i se encuentra fuera del rango");
 		exit(1);
 	}
+	aux = c->frente;
+
+	for(j=1;j<i;j++)
+	{
+		aux = aux->siguiente;
+	}
+	r = aux->e;
+
 	return r;
 }
 
@@ -205,11 +196,21 @@ Recibe: cola *c (Referencia a la cola "c" a operar)
 Devuelve:
 Observaciones: La cola se destruye y se inicializa.
 */
-void Est_Destroy(cola_estatica * c)
+void Dyn_Destroy(cola_dinamica * c)
 {
-	c->num_elem=0;
-	c->frente=-1;
-	c->final=-1;
+	nodo *aux;
+	
+	aux = c->frente;
+	while (aux!=NULL)
+	{
+		c->frente = aux->siguiente;
+		free(aux);
+		aux = c->frente;
+	}
+	c->num_elem = 0;
+	c->frente = NULL;
+	c->final = NULL;
+	
 	return;
 }
 
@@ -222,31 +223,91 @@ Devuelve:
 Observaciones: El elemento al frente de la cola, terminara al final
 			   de la cola, y viceversa para el elemento al final.
 */
-void Est_Flip(cola_estatica *c){
-	cola_estatica aux_c;
-	elemento_estatico aux_e;
+void Dyn_Flip(cola_dinamica *c){
+	cola_dinamica aux_c;
+	elemento_dinamico aux_e;
 	int i, s, n;
 	
-	Est_Initialize(&aux_c);
-	if(Est_Empty(c)){
-		printf("Error: Flip(c) la pila esta vacia");
+	Dyn_Initialize(&aux_c);
+	if(Dyn_Empty(c)){
+		printf("Error: Flip(c) la cola esta vacia");
 		exit(1);
 	}
 	
-	n = Est_Size(c);
+	n = Dyn_Size(c);
 	
 	for(i = 1; i <= n; i++){
-		aux_e = Est_Dequeue(c);
-		Est_Queue(&aux_c, aux_e);
+		aux_e = Dyn_Dequeue(c);
+		Dyn_Queue(&aux_c, aux_e);
 	}
 	
-	s = Est_Size(&aux_c);
-	n = aux_c.frente;
+	s = Dyn_Size(&aux_c);
 	
-	for(i = s; i > n; i--){
-		aux_e = Est_Element(&aux_c, i);
-		Est_Queue(c, aux_e);
+	for(i = s; i > 0; i--){
+		aux_e = Dyn_Element(&aux_c, i);
+		Dyn_Queue(c, aux_e);
 	}
 	
+	return;
+}
+
+
+/*
+void Dyn_Destroy_Node(cola_dinamica *c, int i);
+Descripción: Recibe una cola y la posición de un elemento en ella, para eliminar el elemento en
+			 esa posición y reodenar los nodos.
+Recibe: cola *c (Referencia a la cola "c" a operar)
+		int i	(Posición del elemento a eliminar en la cola)
+Devuelve:
+Observaciones: El elemento anterior al elemento a eliminar, ahora debe de apuntar
+			   al elemento posterior al elemento a eliminar.
+*/
+void Dyn_Destroy_Node(cola_dinamica *c, int i){
+	nodo *nodo_anterior = NULL;
+	nodo *nodo_a_destruir = NULL;
+	int j;
+
+	if(Dyn_Empty(c)){
+		printf("ERROR: Dyn_Destroy_Node(c,i) la cola esta vacia\n");
+		exit(1);
+	}
+
+	if(i > c->num_elem || i <= 0)
+	{
+		printf("ERROR: Dyn_Destroy_Node(c,i) i se encuentra fuera del rango\n");
+		exit(1);
+	}
+
+	//SE ELIMINA EL PRIMER ELEMENTO DE LA COLA
+	if(i == 1){
+		nodo_a_destruir = c->frente;
+		c->frente = c->frente->siguiente;
+
+		free(nodo_a_destruir);
+		c->num_elem--;
+		if(c->num_elem == 0){
+			c->final = NULL;
+		}
+	}
+	//LA COLA TIENE MÁS DE UN ELEMENTO
+	else{
+		nodo_anterior = c->frente;
+		
+		for(j = 1; j < i - 1; j++){
+			nodo_anterior = nodo_anterior->siguiente;
+		}
+	
+		nodo_a_destruir = nodo_anterior->siguiente;
+	
+		nodo_anterior->siguiente = nodo_a_destruir->siguiente;
+	
+		if(nodo_a_destruir == c->final){
+			c->final = nodo_anterior;
+		}
+	
+		free(nodo_a_destruir);
+		c->num_elem--;
+	}
+
 	return;
 }

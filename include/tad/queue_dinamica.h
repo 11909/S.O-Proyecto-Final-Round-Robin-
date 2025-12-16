@@ -15,7 +15,7 @@ durante la ejecución del programa.
  
 */
 //LIBRERIA CON DEFINICIONES EN COMÚN
-#include "queue_common.h"
+#include "common/queue_common.h"
 
 //DEFINICIONES DE TIPOS DE DATO
 
