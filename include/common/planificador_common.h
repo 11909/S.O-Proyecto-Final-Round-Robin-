@@ -68,7 +68,6 @@ typedef struct Proceso{
 //DECLARACIÓN DE ESTRUCTURA PARA LA MEMORIA COMPARTIDAS
 typedef struct SHM_Planificador{
     int planificador_pid;
-    int procesos_registrados;
     ColaRegistros cola_registros;
 }SHM_Planificador;
 

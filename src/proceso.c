@@ -83,7 +83,7 @@ int inicializar_proceso(ContextoProceso *contexto, pid_t pid)
 Descripción: Inicializa los parametros de un proceso para que pueda iniciar su
              comunicación con el Planificador. Se une a la memoria compartida y semaforo,
              así como envia su PID al planificador.
-Recibe: ContextoProceso *contexto (Estructura que tiene los parametros necesario para el manejo del proceso),
+Recibe: ContextoProceso *contexto (Dirección/Referencia de estructura que tiene los parametros necesario para el manejo del proceso),
         pid_t pid (PID del proceso que sera admnistrado por el planificador)
 Devuelve: int (Valor para indicar si el proceso se cumplio o tuvo errores)
 Observaciones: La función solamente puede cometer errores en inicializar los parametros, entonces un

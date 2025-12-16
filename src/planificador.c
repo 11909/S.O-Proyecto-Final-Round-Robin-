@@ -251,23 +251,102 @@ void detener_proceso(pid_t pid){
 }
 
 /*
-SHM_Planificador *iniciar_planificador(pid_t pid_planificador)
-Descripción: Inicializa a la estructura del planificado en la memoria compartida.
-Recibe: pid_t pid (PID del planificador)
-Devuelve: SHM_Planificador * (Dirección/Referencia del segmento donde se enceuntra la memoria compartidad con la estructura)
+int iniciar_planificador(ContextoPlanificador *planificador)
+Descripción: Inicializa los parametros, estructuras y archivos necesarios para que el planificador
+             pueda trabajar.
+Recibe: ContextoPlanificador *planificador (Dirección/Referencia estructura que tiene los parametros necesario para el manejo del planificador)
+        pid_t pid (PID del planificador)
+        int quantum (Cantidad de tiempo en segundos que el planificador da de ejecución a cada proceso)
+Devuelve: 
 Observaciones:  
 */
-SHM_Planificador *iniciar_planificador(pid_t pid_planificador){
-    SHM_Planificador *planificador;
+int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planificador, int quantum){
+    planificador->shm = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
+    if(planificador->shm == (SHM_Planificador*)NULL) return -1;
 
-    planificador = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
-    
+    planificador->shm->planificador_pid = pid_planificador;
+    inicializar_cola_registros(&planificador->shm->cola_registros);
+
+    planificador->semaforo_shm = inicializar_semaforo(SEM_SHM_PATH, INITIAL_SEM_VALUE);
+    if(planificador->semaforo_shm == NULL) return -1;
+
+    inicializar_cola_procesos(&planificador->cola_procesos);
     planificador->procesos_registrados = 0;
-    planificador->planificador_pid = (int) pid_planificador;
-    
-    inicializar_cola_registros(&planificador->cola_registros);
 
-    return planificador;
+    planificador->proceso_actual = NULL;
+    planificador->quantum = quantum;
+    planificador->signal_registros = 0;
+    planificador->signal_terminar = 0;
+
+    return 0;
+}
+
+Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
+    int tamano;
+    Proceso *proceso_auxiliar;
+    ColaProcesos *cola_procesos = &planificador->cola_procesos;
+
+    tamano = Dyn_Size(cola_procesos);
+    if(tamano == 0){
+        perror("ERROR: La cola de procesos no tiene Procesos.\n");
+        return -1;
+    }
+
+    while(Dyn_Size(cola_procesos) > 0){
+        proceso_auxiliar = desencolar_proceso(cola_procesos);
+    
+        if(proceso_auxiliar->estado == TERMINADO){
+            free(proceso_auxiliar);
+            planificador->procesos_registrados--;
+            continue;
+        }
+    
+        if(proceso_auxiliar->estado == PAUSADO || proceso_auxiliar->estado == LISTO){
+            proceso_auxiliar->estado = EJECUTANDO;
+            return proceso_auxiliar;
+        }
+
+        if(proceso_auxiliar->estado == EJECUTANDO){
+            printf("ERROR FATAL: Proceso PID [%d] en cola con estado EJECUTANDO.\n", proceso_auxiliar->pid);
+            exit(1);
+        }
+    }
+
+    printf("Ya no hay procesos por atender");
+    return NULL;
+}
+
+void tratar_registro(ContextoPlanificador *planificador){
+    ColaProcesos *cola_procesos;
+    ColaRegistros *cola_registros;
+    Registro registro;
+    Proceso *proceso;
+
+    sem_wait(planificador->semaforo_shm);
+    cola_procesos = &planificador->cola_procesos;
+    cola_registros = &planificador->shm->cola_registros;
+
+    if(Est_Size(cola_registros) == 0){
+        printf("La cola de registros no tiene registros por atender\n");
+        sem_post(planificador->semaforo_shm);
+        return;
+    }
+
+    while(Est_Size(cola_registros) > 0){
+        registro = desencolar_registro(cola_registros);
+
+        if(registro.solicitud_proceso == SOLICITUD_REGISTRO){
+            encolar_proceso(registro.pid, cola_procesos, LISTO);
+        }
+
+        if(registro.solicitud_proceso == SOLICITUD_ELIMINADO){
+            cambiar_estado_pid(cola_procesos, registro.pid, TERMINADO);
+        }
+    }
+
+    sem_post(planificador->semaforo_shm);
+    planificador->signal_registros = 0;
+    return;
 }
 
 /*
@@ -278,9 +357,14 @@ Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola de procesos c
 Devuelve:
 Observaciones:  
 */
-void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planificador){
+void limpiar_planificador(ContextoPlanificador *planificador){
     Proceso *proceso;
     pid_t pid_proceso;
+
+    sem_wait(planificador->semaforo_shm);
+    ColaProcesos *cola_procesos = &planificador->cola_procesos;
+    ColaRegistros *cola_registros = &planificador->shm->cola_registros;
+
     while(!Dyn_Empty(cola_procesos)){
         proceso = desencolar_proceso(cola_procesos);
         pid_proceso = (pid_t) proceso->pid;
@@ -288,8 +372,8 @@ void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planifi
     }
 
     Dyn_Destroy(cola_procesos);
-
-    Est_Destroy(&planificador->cola_registros);
+    Est_Destroy(cola_registros);
+    sem_post(planificador->semaforo_shm);
 
     if(sem_unlink(SEM_SHM_PATH) == -1){
         perror("ERROR: sem_unlink() en limpiar_planificador()");
@@ -307,3 +391,19 @@ void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planifi
     // }
 }
 
+void imprimir_cola_procesos(ContextoPlanificador *planificador){
+    int i;
+    int pid_proceso;
+    Proceso *proceso_auxiliar;
+    ColaProcesos *cola_procesos;
+
+    cola_procesos = &planificador->cola_procesos;
+    printf("Procesos en cola: \n");
+    printf("Inicio -> ");
+    for(i = 1; i <= Size(cola_procesos); i++){
+        proceso_auxiliar = (Proceso *) Element(cola_procesos, i);
+        pid_proceso = proceso_auxiliar->pid;
+        printf("[%d] \t", pid_proceso);
+    }
+    printf("<- Final");
+}
