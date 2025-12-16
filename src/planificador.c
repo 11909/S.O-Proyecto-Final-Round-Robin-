@@ -3,7 +3,7 @@ LIBRERIA: IMPLEMENTACIÓN DE LIBRERIA PARA PLANIFICADOR ROUND ROBIN
 AUTOR:  Rodriguez Guarneros Hector Daniel 
         Mendez Rosales Miguel Angel
         (C) Noviembre 2024  
-VERSIÓN: 1.0 Noviembre 2024
+VERSIÓN: 4.0 Diciembre 2024
 
 DESCRIPCIÓN: Planificador Round Robin.
 Algoritmo de planificación que hace uso de una cola
@@ -30,10 +30,6 @@ Observaciones:  La función debe hacer uso de las constantes definidos en la cab
 void *inicializar_memoria_compartida(const char *path, int id, size_t size){
     key_t clave;
     int shm_id;
-    void *shm_ptr;
-
-    key_t clave;
-    int shm_id;
     void *shm_ptr = NULL;
 
     clave = ftok(path, id);
@@ -49,7 +45,7 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size){
     }
 
     shm_ptr = shmat(shm_id, NULL, 0);
-    if(shm_id == (void *) -1){
+    if(shm_ptr == (void *) -1){
         perror("ERROR: shmat() en inicializar_memoria_compartida()");
         return NULL;
     }
@@ -133,12 +129,14 @@ void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estad
 
     if(proceso == NULL){
         perror("ERROR: calloc() en encolar_proceso()");
-        return NULL;
+        return;
     }
 
     proceso->pid = (int) pid;
+    proceso->estado = estado_proceso;
 
     Dyn_Queue(cola_procesos, (ElementoColaProcesos)proceso);
+    return;
 }
 
 /*
@@ -156,7 +154,7 @@ Proceso *desencolar_proceso(ColaProcesos *cola_procesos){
 
     if(Dyn_Empty(cola_procesos)){
         printf("ERROR: La cola esta vacia. No hay procesos por sacar\n");
-        return;
+        return NULL;
     }
     
     e = Dyn_Dequeue(cola_procesos);
@@ -211,11 +209,13 @@ Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola dinamica dond
 Devuelve:
 Observaciones: 
 */
-void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo){
+void cambiar_estado_pid(ColaProcesos *cola_procesos, int pid, EstadoProceso estado_nuevo){
     int tamano;
     Proceso *proceso_a_modificar;
+    int posicion;
 
     tamano = Dyn_Size(cola_procesos);
+    posicion = buscar_pid(cola_procesos, pid);
 
     if(posicion <= 0 || posicion > tamano){
         perror("ERROR: La posición esta fuera del rango de la cola. No se puede cambiar su estado");
@@ -236,7 +236,7 @@ Devuelve:
 Observaciones:
 */
 void ejecutar_proceso(pid_t pid){
-    kill(pid, CONTINUAR_PROCESO);
+    kill(pid, SIGNAL_CONTINUAR_PROCESO);
 }
 
 /*
@@ -247,7 +247,7 @@ Devuelve:
 Observaciones:  
 */
 void detener_proceso(pid_t pid){
-    kill(pid, PAUSAR_PROCESO);
+    kill(pid, SIGNAL_PAUSAR_PROCESO);
 }
 
 /*
@@ -281,10 +281,10 @@ Observaciones:
 void limpiar_planificador(ColaProcesos *cola_procesos, SHM_Planificador *planificador){
     Proceso *proceso;
     pid_t pid_proceso;
-    while(!Empty(cola_procesos)){
+    while(!Dyn_Empty(cola_procesos)){
         proceso = desencolar_proceso(cola_procesos);
         pid_proceso = (pid_t) proceso->pid;
-        kill(pid_proceso, MATAR_PROCESO);
+        kill(pid_proceso, SIGNAL_MATAR_PROCESO);
     }
 
     Dyn_Destroy(cola_procesos);

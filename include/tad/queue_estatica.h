@@ -19,8 +19,8 @@ antes de la ejecución del programa.
 
 //DEFINICIONES DE CONSTANTES
 #define MAX_ELEMENT 100
-#define REGISTRAR_PROCESO 1
-#define ELIMINAR_PROCESO 2
+#define SOLICITUD_REGISTRO 1
+#define SOLICITUD_ELIMINADO 2
 
 //Definir un elemento (Se modela con una estructura "elemento")
 typedef struct elemento_estatico

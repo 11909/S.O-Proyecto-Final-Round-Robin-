@@ -17,6 +17,13 @@ OBSERVACIONES:
 //LLAMADA DE LIBRERIAS
 #include "common/planificador_common.h"
 
+//DEFINICIÓN DE ESTRUCTURAS
+typedef struct ContextoProceso{
+        SHM_Planificador *shm;
+        sem_t *semaforo_shm;
+        pid_t pid_proceso;
+}ContextoProceso;
+
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 
 //Unirse a SHM(): Función para que un proceso se una a la memoria compartida para
@@ -29,23 +36,16 @@ sem_t *acceder_semaforo(const char *path);
 
 //Inicializar proceso(): Inicializa todas las variables y estructuras que usara el proceso
 //para su comunicación con el planificador
-SHM_Planificador *inicializa_proceso();
+int inicializar_proceso(ContextoProceso *contexto, pid_t pid);
 
 //Encolar registro(): Función que encola un registro en la cola de registros para que
 //el planificador atienda el registro de acuerdo a la solicitud: REGISTRAR o ELIMINAR.
-void encolar_registro(ColaRegistros *cola_registro, int pid, int solicitud);
+void encolar_registro(ContextoProceso proceso, int solicitud);
 
 //Registrar proceso(): Función para enviar el PID del proceso al planificador e indicar
 //que hay proceso por registrar.
-void registrar_proceso(ColaRegistros *cola_registro, int pid);
+void registrar_proceso(ContextoProceso proceso);
 
 //Terminar proceso(): Función para enviar el pid del proceso al planificador, luego de haber
 //terminado y que el planificador deje de considerar el PID del proceso para la planificación.
-void terminar_proceso(ColaRegistros *cola_registro, int pid);
-
-//Realizar proceso(): Función que empieza 
-void realizar_proceso(volatile sig_atomic_t *signal_planificador, volatile sig_atomic_t *signal_proceso);
-
-//Detener ejecución(): Función que modifica los semaforos y detiene la ejecución de un
-//proceso al recibir la señal para detenerse sin haber terminado.
-void detener_ejecucion(volatile sig_atomic_t *signal_planificador, volatile sig_atomic_t *signal_proceso);
+void terminar_proceso(ContextoProceso proceso);
