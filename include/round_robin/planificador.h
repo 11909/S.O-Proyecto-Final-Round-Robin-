@@ -31,35 +31,25 @@ typedef struct ContextoPlanificador{
 
 //DEFINICIÓN DE FUNCIONES PARA PLANIFICADOR
 
-//Inicializar memoria compartida: Crear espacios de memoria que seran usados por el planificador y procesos
-void *inicializar_memoria_compartida(const char *path, int id, size_t size);      
+void *inicializar_memoria_compartida(const char *path, int id, size_t size);      //Inicializar memoria compartida: Crear espacios de memoria que seran usados por el planificador y procesos
 
-//Inicializar semaforos: Inicializar semaforos dentro de la memoria compartida para evitar condiciones de carrera y administrar procesos
-sem_t *inicializar_semaforo(const char *path, int init);
+sem_t *inicializar_semaforo(const char *path, int init);        //Inicializar semaforos: Inicializar semaforos dentro de la memoria compartida para evitar condiciones de carrera y administrar procesos
 
-//Inicializar cola de proceso: Inicializa la cola dinamica que usara el planificador para ordenar la ejecución de los procesos
-void inicializar_cola_procesos(cola_dinamica *cola_procesos);
+void inicializar_cola_procesos(cola_dinamica *cola_procesos);   //Inicializar cola de proceso: Inicializa la cola dinamica que usara el planificador para ordenar la ejecución de los procesos
 
-//Desencolar registro(): Desencola un registro que se encuentra la cola estatica de registros. 
-Registro desencolar_registro(ColaRegistros *cola_registro);
+int desencolar_registro(ColaRegistros *cola_registro, Registro *registro_obtenido);     //Desencolar registro(): Desencola un registro que se encuentra la cola estatica de registros. 
 
-//Encolar proceso(): Encola la estructura de un proceso 
-void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estado_proceso);
+void encolar_proceso(pid_t pid, ColaProcesos *cola_procesos, EstadoProceso estado_proceso);     //Encolar proceso(): Encola la estructura de un proceso 
 
-//Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar despues lo retorna a la cola tran ejecutar el quantum.
-Proceso *desencolar_proceso(ColaProcesos *cola_procesos); 
+Proceso *desencolar_proceso(ColaProcesos *cola_procesos);       //Desencolar proceso(): Obtiene el proceso siguiente que se debe ejecutar despues lo retorna a la cola tran ejecutar el quantum.
 
-//Buscar pid(): Busca un PID dentro de la cola de procesos, retorna la posición donde se encuentra el Proceso que tiene el mismo PID
-int buscar_pid(ColaProcesos *cola_procesos, int pid);
+int buscar_pid(ColaProcesos *cola_procesos, int pid);   //Buscar pid(): Busca un PID dentro de la cola de procesos, retorna la posición donde se encuentra el Proceso que tiene el mismo PID
 
-//Cambiar estado de pid(): Va a la posición indicada en la cola y obtiene el Proceso en esa posición, despues cambia el estado del proceso.
-void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo);
+void cambiar_estado_pid(ColaProcesos *cola_procesos, int posicion, EstadoProceso estado_nuevo); //Cambiar estado de pid(): Va a la posición indicada en la cola y obtiene el Proceso en esa posición, despues cambia el estado del proceso.
 
-//Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar enviando una señal para indicar ejecución al proceso.
-void ejecutar_proceso(pid_t pid);           
+void ejecutar_proceso(pid_t pid);       //Ejecutar proceso(): Realiza un quantum sobre el proceso actual a ejecutar enviando una señal para indicar ejecución al proceso.
 
-//Detener proceso(): Envia una señal a un proceso para indicar que termino su tiempo de ejecución, iniciando el proceso de seleccionar el siguiente proceso
-void pausar_proceso(pid_t pid);
+void pausar_proceso(pid_t pid); //Detener proceso(): Envia una señal a un proceso para indicar que termino su tiempo de ejecución, iniciando el proceso de seleccionar el siguiente proceso
 
 int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planificador, int quantum);      //Iniciar planificador(): Inicializa los valores, estructuras, memoria compartida y semaforos para el planificador
 

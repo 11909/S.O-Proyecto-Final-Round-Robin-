@@ -27,13 +27,13 @@ OBSERVACIONES:
 #include <sys/shm.h>
 #include <semaphore.h>
 #include <signal.h>
-#include "queue_dinamica.h"
-#include "queue_estatica.h"
+#include "tad/queue_estatica.h"
+#include "tad/queue_dinamica.h"
 
 //DECLARACIÓN DE CONSTANTES
-#define SHM_PATH "/tmp/shm"
+#define SHM_PATH "/tmp/planificador_key"
 #define SHM_KEY 'A'
-#define SEM_SHM_PATH "/tmp/sem_shm"
+#define SEM_SHM_PATH "/planificador_semaforo"
 #define INITIAL_SEM_VALUE 1
 
 //SEÑALES DE PLANIFICADOR -> PROCESO

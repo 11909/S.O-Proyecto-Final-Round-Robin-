@@ -16,6 +16,8 @@ OBSERVACIONES:
  
 */
 #include "round_robin/planificador.h"
+#include <sys/types.h>
+#include <signal.h>
 
 /*
 void *inicializar_memoria_compartida(const char *path, int id, size_t size)
@@ -32,9 +34,16 @@ void *inicializar_memoria_compartida(const char *path, int id, size_t size){
     int shm_id;
     void *shm_ptr = NULL;
 
+    int fd = open(path, O_CREAT, 0666); 
+    if (fd == -1) {
+        perror("Error al crear el archivo clave para SHM");
+        exit(EXIT_FAILURE);
+    }
+    close(fd);
+
     clave = ftok(path, id);
     if(clave == (key_t) -1){
-        perror("ERROR: ftok() en unirse_memoria_compartida()");
+        perror("ERROR: ftok() en inicializar_memoria_compartida()");
         return NULL;
     }
 
@@ -63,6 +72,7 @@ Observaciones:  El semaforo debe usar la ruta definida de forma global en
 */
 sem_t *inicializar_semaforo(const char *path, int init){
     sem_t *semaforo;
+
     semaforo = sem_open(path, O_CREAT, 0644, init);
 
     if(semaforo == SEM_FAILED){
@@ -99,19 +109,24 @@ void inicializar_cola_registros(ColaRegistros *cola_registro){
 Registro desencolar_registro(ColaRegistros *cola_registro)
 Descripción: Función desencola un registro de la cola de registros y lo devuelve.
 Recibe: ColaRegistros *cola_registro (Dirección/Referencia de cola estatica circular con registros)
-Devuelve: Registro (Elemento estatico que tiene los datos del Registro)
-Observaciones:  
+        Registro *registro_obtenido (Dirección/Referencia de Registro donde se asignara el registro desencolado)
+Devuelve: int (Numero que representa el estado de salida de la función)
+Observaciones:  0 [Salida erronea], 1 [Salida exitosa]
 */
-Registro desencolar_registro(ColaRegistros *cola_registro){
-    Registro r;
+int desencolar_registro(ColaRegistros *cola_registro, Registro *registro_obtenido){
+    int resultado;
 
+    resultado = 0;
     if(Est_Empty(cola_registro)){
         perror("ERROR: La cola de registros esta vacia\n");
-        exit(1);
+        resultado = 0;
+    }
+    else{
+        *registro_obtenido = Est_Dequeue(cola_registro);
+        resultado = 1;
     }
 
-    r = Est_Dequeue(cola_registro);
-    return r;
+    return resultado;
 }
 
 /*
@@ -153,7 +168,7 @@ Proceso *desencolar_proceso(ColaProcesos *cola_procesos){
     Proceso *p;
 
     if(Dyn_Empty(cola_procesos)){
-        printf("ERROR: La cola esta vacia. No hay procesos por sacar\n");
+        perror("ERROR: La cola esta vacia. No hay procesos por sacar\n");
         return NULL;
     }
     
@@ -171,8 +186,8 @@ Descripción: Busca un proceso dentro de la cola de procesos que tenga el mismo 
 Recibe: ColaProcesos *cola_procesos (Dirección/Referencia de cola dinamica donde se encuentran los procesos),
         int pid (Valor del PID a buscar en al cola)
 Devuelve: int (Posición dentro de la cola dinamica donde se encuentra el PID)
-Observaciones: La función comprueba que la cola no este vacia entes de hacer la busqueda, en caso de estarlo
-               realiza un exit(). Solo hacerlo cuando la cola este llena.
+Observaciones:  La función en caso de no encontrar el PID dentro de la cola de procesos devuelve -1.
+                -1 [Salida erronea]
 */
 int buscar_pid(ColaProcesos *cola_procesos, int pid){
     int tamano;
@@ -182,7 +197,7 @@ int buscar_pid(ColaProcesos *cola_procesos, int pid){
 
     if(Dyn_Empty(cola_procesos)){
         perror("ERROR: La cola de procesos esta vacia. No hay Procesos a buscar\n");
-        exit(1);
+        return -1;
     }
 
     tamano = Dyn_Size(cola_procesos);
@@ -257,16 +272,10 @@ Descripción: Inicializa los parametros, estructuras y archivos necesarios para 
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia estructura que tiene los parametros necesario para el manejo del planificador)
         pid_t pid (PID del planificador)
         int quantum (Cantidad de tiempo en segundos que el planificador da de ejecución a cada proceso)
-Devuelve: 
-Observaciones:  
+Devuelve: int (Entero para representar el estado de salida de la función)
+Observaciones:  -1 [Salida erronea], 0 [Salida correcta]
 */
 int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planificador, int quantum){
-    planificador = (ContextoPlanificador*) calloc(1, sizeof(ContextoPlanificador));
-    if(planificador == NULL){
-        printf("ERROR: Asignación de memoria en iniciar_planificador()");
-        return -1;
-    }
-    
     planificador->shm = (SHM_Planificador *) inicializar_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
     if(planificador->shm == (SHM_Planificador*)NULL) return -1;
 
@@ -289,9 +298,10 @@ int iniciar_planificador(ContextoPlanificador *planificador, pid_t pid_planifica
 
 /*
 Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador)
-Descripción: 
+Descripción: Función que desencola Procesos de la cola de Procesos y los trata, hasta que desencole un
+             proceso que este Listo o Pausado para ser ejecutado.
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
-Devuelve:   
+Devuelve:   Proceso *proceso (Dirección/Referencia del Proceso desencolado)
 Observaciones:    
 */
 Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
@@ -302,13 +312,19 @@ Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
     tamano = Dyn_Size(cola_procesos);
     if(tamano == 0){
         perror("ERROR: La cola de procesos no tiene Procesos.\n");
-        return -1;
+        return NULL;
+    }
+
+    if(planificador->proceso_actual != NULL){
+        perror("ERROR: Ya se encuentra manejando un proceso el planificador. \n");
+        return NULL;
     }
 
     while(Dyn_Size(cola_procesos) > 0){
         proceso_auxiliar = desencolar_proceso(cola_procesos);
     
         if(proceso_auxiliar->estado == TERMINADO){
+            printf("Un proceso ha terminado. [PID: %d]\n", proceso_auxiliar->pid);
             free(proceso_auxiliar);
             planificador->procesos_registrados--;
             continue;
@@ -325,13 +341,15 @@ Proceso *obtener_siguiente_proceso(ContextoPlanificador *planificador){
         }
     }
 
-    printf("Ya no hay procesos por atender");
+    printf("Ya no hay procesos por atender\n");
     return NULL;
 }
 
 /*
 void tratar_registro(ContextoPlanificador *planificador)
-Descripción: 
+Descripción: Función que se encerga de desencolar todos los registros pendientes en la cola de registros.
+             Encola todo proceso que solicita un registro, y cambia el estado a Terminado de todo proceso
+             que avisa haber terminado.
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
 Devuelve: 
 Observaciones:  
@@ -340,7 +358,7 @@ void tratar_registro(ContextoPlanificador *planificador){
     ColaProcesos *cola_procesos;
     ColaRegistros *cola_registros;
     Registro registro;
-    Proceso *proceso;
+    int bool_registro;
 
     sem_wait(planificador->semaforo_shm);
     cola_procesos = &planificador->cola_procesos;
@@ -353,10 +371,17 @@ void tratar_registro(ContextoPlanificador *planificador){
     }
 
     while(Est_Size(cola_registros) > 0){
-        registro = desencolar_registro(cola_registros);
+        bool_registro = desencolar_registro(cola_registros, &registro);
+
+        if(bool_registro == 0){
+            printf("ERROR: No se logro desencolar el registro correctamente\n");
+            break;
+        }
 
         if(registro.solicitud_proceso == SOLICITUD_REGISTRO){
             encolar_proceso(registro.pid, cola_procesos, LISTO);
+            planificador->procesos_registrados++;
+            printf("Se ha registrado un nuevo proceso. [PID: %d]\n", registro.pid);
         }
 
         if(registro.solicitud_proceso == SOLICITUD_ELIMINADO){
@@ -366,12 +391,13 @@ void tratar_registro(ContextoPlanificador *planificador){
 
     sem_post(planificador->semaforo_shm);
     planificador->signal_registros = 0;
+    printf("Ya no hay registro por atender. \n");
     return;
 }
 
 /*
 int planificador_proceso_disponible(ContextoPlanificador *planificador)
-Descripción: 
+Descripción: Función que comprueba que haya procesos disponibles en la cola de procesos.
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
 Devuelve: int   (Estado de salida para indicar disponibilidad de procesos en la cola de procesos)
 Observaciones:  0 [Sin procesos disponibles], 1 [Procesos dispnibles]  
@@ -385,7 +411,7 @@ int planificador_proceso_disponible(ContextoPlanificador *planificador){
     resultado = 0;
     if(Dyn_Empty(cola_procesos)){
         printf("No hay procesos por tratar en la cola de procesos.\n");
-        resultado= 0;
+        resultado = 0;
     }
     else{
         resultado = 1;
@@ -396,26 +422,31 @@ int planificador_proceso_disponible(ContextoPlanificador *planificador){
 
 /*
 int planificador_ejecuta_proceso(ContextoPlanificador *planificador)
-Descripción: 
+Descripción: Función que ejecuta el proceso actual manejado por el planificador. Cambiando su estado de Listo a
+             Ejecutando.
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
 Devuelve: int   (Estado de salida de la función)
 Observaciones:  0 [Salida erronea], 1 [Salida correcta]  
 */
 int planificador_ejecuta_proceso(ContextoPlanificador *planificador){
     Proceso *proceso;
-    int resultado;
+    int resultado = 0;
 
     proceso = obtener_siguiente_proceso(planificador);
-
-    resultado = 0;
-    if(proceso->estado == LISTO){
+    if(proceso == NULL){
+        printf("ERROR: No hay procesos para tratar.\n");
+        resultado = 0;
+    }
+    else if(proceso->estado == LISTO){
         planificador->proceso_actual = proceso;
         planificador->proceso_actual->estado = EJECUTANDO;
         ejecutar_proceso(planificador->proceso_actual->pid);
+        printf("Se esta ejecutando un proceso. [PID: %d]\n", planificador->proceso_actual->pid);
+        imprimir_cola_procesos(planificador);
         resultado = 1;
     }
     else{
-        printf("ERROR: El proceso no estaba listo para ser ejecutado");
+        printf("ERROR: El proceso no estaba listo para ser ejecutado\n");
         resultado = 0;
     }
 
@@ -442,7 +473,8 @@ int planificador_pausa_proceso(ContextoPlanificador *planificador){
     }
     else if(proceso->estado == EJECUTANDO){
         pausar_proceso(proceso->pid);
-        encolar_proceso(proceso->pid, &planificador->cola_procesos, PAUSADO);
+        proceso->estado = PAUSADO;
+        Dyn_Queue(&planificador->cola_procesos, proceso);
         planificador->proceso_actual = NULL;
 
         resultado = 1;
@@ -461,7 +493,8 @@ void limpiar_planificador(ContextoPlanificador *planificador)
 Descripción: Separa, elimina y limpia las estructuras que usa el planificador.
 Recibe: ContextoPlanificador *planificador (Dirección/Referencia de estructura con parametros del planificador)
 Devuelve:
-Observaciones:  
+Observaciones:  La función se debe de encargar de liberar todos los espacios de memorias asignados para los procesos
+                de la cola de procesos.
 */
 void limpiar_planificador(ContextoPlanificador *planificador){
     Proceso *proceso;
@@ -475,6 +508,7 @@ void limpiar_planificador(ContextoPlanificador *planificador){
         proceso = desencolar_proceso(cola_procesos);
         pid_proceso = (pid_t) proceso->pid;
         kill(pid_proceso, SIGNAL_MATAR_PROCESO);
+        free(proceso);
     }
 
     Dyn_Destroy(cola_procesos);
@@ -483,12 +517,12 @@ void limpiar_planificador(ContextoPlanificador *planificador){
 
     if(sem_unlink(SEM_SHM_PATH) == -1){
         perror("ERROR: sem_unlink() en limpiar_planificador()");
-        return NULL;
+        return;
     }
 
-    if(shmdt(planificador) == -1){
+    if(shmdt(planificador->shm) == -1){
         perror("ERROR: shmdt en limpiar_planificador()");
-        return NULL;
+        return;
     }
 
     free(planificador);
@@ -514,10 +548,10 @@ void imprimir_cola_procesos(ContextoPlanificador *planificador){
     cola_procesos = &planificador->cola_procesos;
     printf("Procesos en cola: \n");
     printf("Inicio -> ");
-    for(i = 1; i <= Size(cola_procesos); i++){
-        proceso_auxiliar = (Proceso *) Element(cola_procesos, i);
+    for(i = 1; i <= Dyn_Size(cola_procesos); i++){
+        proceso_auxiliar = (Proceso *) Dyn_Element(cola_procesos, i);
         pid_proceso = proceso_auxiliar->pid;
         printf("[%d] \t", pid_proceso);
     }
-    printf("<- Final");
+    printf("<- Final\n");
 }

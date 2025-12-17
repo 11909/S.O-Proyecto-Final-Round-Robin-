@@ -20,6 +20,8 @@ al planificador que hay registros pendientes.
 
 //LLAMADA DE LIBRERIAS
 #include "round_robin/proceso.h"
+#include <sys/types.h>
+#include <signal.h>
 
 //DEFINICIÓN DE FUNCIONES PARA PROCESO
 /*
@@ -36,6 +38,13 @@ void *unirse_memoria_compartida(const char *path, int id, size_t size){
     key_t clave;
     int shm_id;
     void *shm_ptr = NULL;
+
+    int fd = open(path, O_CREAT, 0666); 
+    if (fd == -1) {
+        perror("Error al crear el archivo clave para SHM");
+        exit(EXIT_FAILURE);
+    }
+    close(fd);
 
     clave = ftok(path, id);
     if(clave == (key_t) -1){
@@ -90,12 +99,6 @@ Observaciones: La función solamente puede cometer errores en inicializar los pa
                error siginifica que no se ha registrado. Se recomienda hacer un exit().
 */
 int inicializar_proceso(ContextoProceso *proceso, pid_t pid){
-    proceso = (ContextoProceso*) calloc(1, sizeof(ContextoProceso));
-    if(proceso == NULL){
-        printf("ERROR: Asignación de memoria erronea en inicialziar_proceso()");
-        return -1;
-    }
-    
     proceso->shm = (SHM_Planificador*) unirse_memoria_compartida(SHM_PATH, SHM_KEY, sizeof(SHM_Planificador));
     if(proceso->shm == (SHM_Planificador *)NULL) return -1;
     
