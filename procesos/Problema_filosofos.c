@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <stdbool.h>
 
+#include "round_robin/proceso.h"
+ContextoProceso proceso;
+
 #define HAMBRIENTO 0
 #define COMIENDO 1
 #define PENSANDO 2
@@ -30,6 +33,10 @@ int izquierda(int i);
 int derecha(int i);
 
 int main(){
+    pid_t pid_proceso;
+    pid_proceso = getpid();
+    inicializar_proceso(&proceso, pid_proceso);
+
     for(int i = 0; i < NUM_FILOSOFOS; i++){
         estados_filosofos[i] = PENSANDO;
     }
@@ -42,6 +49,8 @@ int main(){
         pthread_join(FILOSOFOS[i], NULL);
     }
 
+    terminar_proceso(proceso);
+    return 1;
 }
 
 

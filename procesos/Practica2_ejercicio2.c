@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include "round_robin/proceso.h"
+ContextoProceso proceso;
 
 //DECLARAR FUNCIONES
 void crear_hijo_millenial(const char* nombre);
@@ -13,6 +15,10 @@ int main(){
 	//PROCESO DE GENERACION X
 	pid_t pid = getpid();
 	
+	pid_t pid_proceso;
+    pid_proceso = getpid();
+    inicializar_proceso(&proceso, pid_proceso);
+
 	printf("\nSoy el proceso de generacion X\n");
 	printf("Mi PID es: %d\n", pid);
 	printf("No tengo proceso padre\n");
@@ -22,10 +28,12 @@ int main(){
 	crear_hijo_millenial("MILLENIAL");
 	
 	// Esperar a todos los procesos hijos (Millenials)
-    	while (wait(NULL) > 0); // Recolecta todos los hijos que hayan terminado
+	while (wait(NULL) > 0); // Recolecta todos los hijos que hayan terminado
 
-    	printf("\n[Main] Todos los procesos han terminado.\n");
-    	return 0;
+	printf("\n[Main] Todos los procesos han terminado.\n");
+
+	terminar_proceso(proceso);
+	return 0;
 }
 
 void crear_hijo_millenial(const char* nombre){
@@ -38,6 +46,10 @@ void crear_hijo_millenial(const char* nombre){
 	}
 	//PROCESO HIJO
 	else if(pid == 0){
+		pid_t pid_proceso;
+		pid_proceso = getpid();
+		inicializar_proceso(&proceso, pid_proceso);
+
 		pid_t pid_hijo = getpid();
 		pid_t pid_padre = getppid();
 		
@@ -51,6 +63,7 @@ void crear_hijo_millenial(const char* nombre){
 		crear_hijo_z("Z");
 		
 		//TERMINAR PROCESO
+		terminar_proceso(proceso);
 		_exit(42);
 	}
 	//PROCESO PADRE 
@@ -70,6 +83,10 @@ void crear_hijo_z(const char* nombre){
 	}
 	//PROCESO HIJO
 	else if(pid == 0){
+		pid_t pid_proceso;
+		pid_proceso = getpid();
+		inicializar_proceso(&proceso, pid_proceso);
+
 		pid_t pid_hijo = getpid();
 		pid_t pid_padre = getppid();
 		
@@ -82,6 +99,7 @@ void crear_hijo_z(const char* nombre){
 		crear_hijo_alfa("ALFA");
 		
 		//TERMINAR PROCESO
+		terminar_proceso(proceso);
 		_exit(42);
 	}
 	//PROCESO PADRE 
@@ -101,6 +119,10 @@ void crear_hijo_alfa(const char* nombre){
 	}
 	//PROCESO HIJO
 	else if(pid == 0){
+		pid_t pid_proceso;
+		pid_proceso = getpid();
+		inicializar_proceso(&proceso, pid_proceso);
+
 		pid_t pid_hijo = getpid();
 		pid_t pid_padre = getppid();
 		
@@ -112,6 +134,7 @@ void crear_hijo_alfa(const char* nombre){
 		sleep(5);
 		
 		//TERMINAR PROCESO
+		terminar_proceso(proceso);
 		_exit(42);
 	}
 	//PROCESO PADRE 

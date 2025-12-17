@@ -108,6 +108,7 @@ int inicializar_proceso(ContextoProceso *proceso, pid_t pid){
     proceso->pid_proceso = pid;
 
     registrar_proceso(*proceso);
+    printf("[PID %d] Proceso ha solicitud de registro\n", (int)pid);
     return 0;
 }
 

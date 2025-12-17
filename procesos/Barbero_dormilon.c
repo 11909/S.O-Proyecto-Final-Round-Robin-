@@ -1,11 +1,13 @@
 // ESCOM | SISTEMAS OPERATIVOS
 // MENDEZ ROSALES MIGUEL ANGEL, RODRIGUEZ GUARNEROS HECTOR DANIEL
-
+#include "round_robin/proceso.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
+
+ContextoProceso proceso;
 
 int N; //NUmero de sillas
 int sillas_libres; // Número de sillas libres
@@ -25,7 +27,7 @@ int main() {
     printf("Introduce el numero de sillas: "); 
     scanf("%d",&N);
     sillas_libres=N; 
-    
+
     pthread_t barbero_tid;
     pthread_t clientes_tid[numClientes];
     
@@ -34,6 +36,11 @@ int main() {
     sem_init(&barbero, 0, 0);   // Barbero no está listo inicialmente
     sem_init(&mutex, 0, 1);     // Mutex para sección crítica
     
+    pid_t pid_proceso;
+
+    pid_proceso = getpid();
+    inicializar_proceso(&proceso, pid_proceso);
+
     printf("Barbería abierta con %d sillas de espera\n\n", N);
     
     // Crea el hilo del barbero
@@ -64,6 +71,8 @@ int main() {
     sem_destroy(&barbero);
     sem_destroy(&mutex);
     
+
+    terminar_proceso(proceso);
     return 0;
 }
 

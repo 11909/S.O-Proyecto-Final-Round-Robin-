@@ -1,12 +1,10 @@
-#include "round_robin/proceso.h"
 #include <stdio.h>
 #include <unistd.h>
-
+#include "round_robin/proceso.h"
 ContextoProceso proceso;
 
 int main(){
     pid_t pid_proceso;
-
     pid_proceso = getpid();
     inicializar_proceso(&proceso, pid_proceso);
 
