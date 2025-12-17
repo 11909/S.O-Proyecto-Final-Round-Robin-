@@ -17,4 +17,5 @@ int main(){
         sleep(3);
     }
 
+    terminar_proceso(proceso);
 }
